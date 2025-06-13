@@ -20,8 +20,11 @@ export default function InputPanel({
     const updatedProducts = [...topPicks];
     
     if (field === "pros" || field === "cons") {
-      // Split comma-separated string into array
-      updatedProducts[index][field] = value.split(",").map(item => item.trim()).filter(item => item !== "");
+      // Split comma-separated string into array and trim whitespace
+      updatedProducts[index][field] = value
+        .split(",")
+        .map(item => item.trim())
+        .filter(item => item !== "");
     } else {
       // @ts-ignore - TypeScript doesn't know that we're only updating string fields
       updatedProducts[index][field] = value;

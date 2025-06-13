@@ -12,35 +12,35 @@ export default function SiteSparkApp() {
   const { width } = useWindowDimensions();
   const isWideScreen = width > 1024;
 
-  // Initialize state
-  const [nicheTitle, setNicheTitle] = useState<string>("Best Products of 2025");
+  // Initialize state with placeholder data
+  const [nicheTitle, setNicheTitle] = useState<string>("Best Laptops of 2025");
   const [topPicks, setTopPicks] = useState<Product[]>([
     {
       id: 1,
-      name: "",
-      imageUrl: "",
-      tagline: "",
-      pros: [],
-      cons: [],
-      affiliateLink: "",
+      name: "MacBook Pro M3",
+      imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1626&q=80",
+      tagline: "Ultimate performance for professionals with the revolutionary M3 chip",
+      pros: ["Exceptional battery life", "Powerful M3 processor", "Beautiful Retina display", "Premium build quality"],
+      cons: ["Expensive", "Limited ports", "Not easily upgradable"],
+      affiliateLink: "https://amazon.com/macbook-pro",
     },
     {
       id: 2,
-      name: "",
-      imageUrl: "",
-      tagline: "",
-      pros: [],
-      cons: [],
-      affiliateLink: "",
+      name: "Dell XPS 15",
+      imageUrl: "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1632&q=80",
+      tagline: "Perfect balance of performance and portability for Windows users",
+      pros: ["Gorgeous 4K display", "Powerful Intel processor", "Premium design", "Great keyboard"],
+      cons: ["Average battery life", "Can run hot under load", "Expensive upgrades"],
+      affiliateLink: "https://amazon.com/dell-xps-15",
     },
     {
       id: 3,
-      name: "",
-      imageUrl: "",
-      tagline: "",
-      pros: [],
-      cons: [],
-      affiliateLink: "",
+      name: "Lenovo ThinkPad X1 Carbon",
+      imageUrl: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
+      tagline: "Business-class laptop with legendary durability and performance",
+      pros: ["Incredible keyboard", "Lightweight yet durable", "Great battery life", "Excellent security features"],
+      cons: ["Business pricing", "Conservative design", "Average speakers"],
+      affiliateLink: "https://amazon.com/thinkpad-x1-carbon",
     },
   ]);
   const [generatedHtml, setGeneratedHtml] = useState<string>("");

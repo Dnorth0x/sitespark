@@ -10,14 +10,19 @@ interface ActionsProps {
 
 export default function Actions({ onGenerateHtml, generatedHtml }: ActionsProps) {
   const copyToClipboard = async () => {
-    if (Platform.OS !== "web") {
-      await Haptics.selectionAsync();
+    try {
+      if (Platform.OS !== "web") {
+        await Haptics.selectionAsync();
+      }
+      
+      await Clipboard.setStringAsync(generatedHtml);
+      
+      // You could add a toast notification here
+      alert("HTML copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      alert("Failed to copy to clipboard. Please try again.");
     }
-    
-    await Clipboard.setStringAsync(generatedHtml);
-    
-    // You could add a toast notification here
-    alert("HTML copied to clipboard!");
   };
 
   return (
