@@ -359,7 +359,7 @@ export default function SiteSparkApp() {
         }} 
       />
       
-      <View style={styles.container}>
+      <View style={[styles.container, isMobile && styles.mobileContainer]}>
         {/* Mobile Navigation */}
         {isMobile && <MobileNavigation />}
         
@@ -446,12 +446,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.background,
     overflow: "hidden",
   },
+  mobileContainer: {
+    flex: 1,
+    backgroundColor: Colors.light.background,
+    // Remove overflow hidden for mobile to allow natural scrolling
+  },
   content: {
     flex: 1,
     overflow: "hidden",
   },
   mobileContent: {
-    flex: 1,
+    // Remove flex: 1 to allow natural height growth
+    width: "100%",
   },
   rowLayout: {
     flexDirection: "row",
@@ -524,11 +530,15 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   mobilePanel: {
-    flex: 1,
+    // Remove flex: 1 and allow natural height
+    width: "100%",
     backgroundColor: Colors.light.card,
+    minHeight: "100%",
   },
   mobileFormContainer: {
-    flex: 1,
+    // Remove flex: 1 and allow natural height
+    width: "100%",
+    minHeight: "100%",
   },
   loginContainer: {
     flex: 1,
