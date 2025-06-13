@@ -51,6 +51,7 @@ export default function SiteSparkApp() {
   const [generatedHtml, setGeneratedHtml] = useState<string>("");
   const [saveStatus, setSaveStatus] = useState<string>("idle");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("classic");
 
   // Load data from storage on initial render
   useEffect(() => {
@@ -68,6 +69,12 @@ export default function SiteSparkApp() {
         const savedTopPicks = await storage.getItem(STORAGE_KEYS.TOP_PICKS);
         if (savedTopPicks) {
           setTopPicks(JSON.parse(savedTopPicks));
+        }
+        
+        // Load selected template
+        const savedTemplate = await storage.getItem(STORAGE_KEYS.SELECTED_TEMPLATE);
+        if (savedTemplate) {
+          setSelectedTemplate(savedTemplate);
         }
       } catch (error) {
         console.error("Error loading saved data:", error);
@@ -94,6 +101,9 @@ export default function SiteSparkApp() {
         // Save top picks
         await storage.setItem(STORAGE_KEYS.TOP_PICKS, JSON.stringify(topPicks));
         
+        // Save selected template
+        await storage.setItem(STORAGE_KEYS.SELECTED_TEMPLATE, selectedTemplate);
+        
         // Update save status with a delay
         setTimeout(() => {
           setSaveStatus("Saved!");
@@ -115,11 +125,11 @@ export default function SiteSparkApp() {
     };
     
     saveData();
-  }, [nicheTitle, topPicks, isLoading]);
+  }, [nicheTitle, topPicks, selectedTemplate, isLoading]);
 
   // Generate HTML function
   const handleGenerateHtml = () => {
-    const html = generateHtml(nicheTitle, topPicks);
+    const html = generateHtml(nicheTitle, topPicks, selectedTemplate);
     setGeneratedHtml(html);
   };
 
@@ -145,10 +155,12 @@ export default function SiteSparkApp() {
     try {
       await storage.removeItem(STORAGE_KEYS.NICHE_TITLE);
       await storage.removeItem(STORAGE_KEYS.TOP_PICKS);
+      await storage.removeItem(STORAGE_KEYS.SELECTED_TEMPLATE);
       
       // Reset state to defaults
       setNicheTitle(DEFAULT_NICHE_TITLE);
       setTopPicks(DEFAULT_TOP_PICKS);
+      setSelectedTemplate("classic");
       setGeneratedHtml("");
       
       // Show confirmation
@@ -201,6 +213,8 @@ export default function SiteSparkApp() {
               generatedHtml={generatedHtml}
               saveStatus={saveStatus}
               onClearData={handleClearData}
+              selectedTemplate={selectedTemplate}
+              setSelectedTemplate={setSelectedTemplate}
             />
           </View>
           

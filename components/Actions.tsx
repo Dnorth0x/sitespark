@@ -1,18 +1,28 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text, Platform } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
-import { AlertCircle } from "lucide-react-native";
+import { AlertCircle, ChevronDown } from "lucide-react-native";
 import Colors from "@/constants/colors";
+import { Picker } from "@react-native-picker/picker";
 
 interface ActionsProps {
   onGenerateHtml: () => void;
   generatedHtml: string;
   saveStatus: string;
   onClearData: () => void;
+  selectedTemplate: string;
+  setSelectedTemplate: (template: string) => void;
 }
 
-export default function Actions({ onGenerateHtml, generatedHtml, saveStatus, onClearData }: ActionsProps) {
+export default function Actions({ 
+  onGenerateHtml, 
+  generatedHtml, 
+  saveStatus, 
+  onClearData,
+  selectedTemplate,
+  setSelectedTemplate
+}: ActionsProps) {
   const copyToClipboard = async () => {
     try {
       if (Platform.OS !== "web") {
@@ -31,6 +41,43 @@ export default function Actions({ onGenerateHtml, generatedHtml, saveStatus, onC
 
   return (
     <View style={styles.container}>
+      <View style={styles.templateSelector}>
+        <Text style={styles.templateLabel}>Select Template:</Text>
+        <View style={styles.pickerContainer}>
+          {Platform.OS === "ios" ? (
+            <TouchableOpacity 
+              style={styles.pickerButton}
+              onPress={() => {
+                // On iOS, we'd typically show an ActionSheet or modal
+                // For simplicity, we'll just cycle through options
+                const templates = ["classic", "table", "grid"];
+                const currentIndex = templates.indexOf(selectedTemplate);
+                const nextIndex = (currentIndex + 1) % templates.length;
+                setSelectedTemplate(templates[nextIndex]);
+              }}
+            >
+              <Text style={styles.pickerButtonText}>
+                {selectedTemplate === "classic" ? "Classic Layout" : 
+                 selectedTemplate === "table" ? "Comparison Table" : 
+                 "Modern Grid"}
+              </Text>
+              <ChevronDown size={16} color="#4f46e5" />
+            </TouchableOpacity>
+          ) : (
+            <Picker
+              selectedValue={selectedTemplate}
+              onValueChange={(itemValue) => setSelectedTemplate(itemValue)}
+              style={styles.picker}
+              dropdownIconColor="#4f46e5"
+            >
+              <Picker.Item label="Classic Layout" value="classic" />
+              <Picker.Item label="Comparison Table" value="table" />
+              <Picker.Item label="Modern Grid" value="grid" />
+            </Picker>
+          )}
+        </View>
+      </View>
+      
       <View style={styles.actionsRow}>
         <TouchableOpacity 
           style={styles.generateButton} 
@@ -88,6 +135,37 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     gap: 16,
     paddingHorizontal: 16,
+  },
+  templateSelector: {
+    marginBottom: 8,
+  },
+  templateLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 8,
+    color: "#374151",
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    backgroundColor: "#ffffff",
+    marginBottom: 8,
+  },
+  picker: {
+    height: 50,
+    width: "100%",
+  },
+  pickerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  pickerButtonText: {
+    fontSize: 16,
+    color: "#4f46e5",
   },
   actionsRow: {
     flexDirection: "row",
