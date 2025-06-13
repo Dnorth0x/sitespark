@@ -1,7 +1,8 @@
 import React from "react";
-import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, Platform } from "react-native";
+import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, Platform, TouchableOpacity } from "react-native";
 import { Product } from "@/types";
 import Colors from "@/constants/colors";
+import { Plus, X } from "lucide-react-native";
 
 interface InputPanelProps {
   nicheTitle: string;
@@ -44,6 +45,27 @@ export default function InputPanel({
     }
     
     setTopPicks(updatedProducts);
+  };
+
+  const addProduct = () => {
+    const newProduct: Product = {
+      id: Date.now(), // Simple unique ID
+      name: "",
+      imageUrl: "",
+      tagline: "",
+      pros: [],
+      cons: [],
+      affiliateLink: "",
+    };
+    
+    setTopPicks([...topPicks, newProduct]);
+  };
+
+  const removeProduct = (index: number) => {
+    if (topPicks.length > 1) {
+      const updatedProducts = topPicks.filter((_, i) => i !== index);
+      setTopPicks(updatedProducts);
+    }
   };
 
   if (isLoading) {
@@ -141,11 +163,27 @@ export default function InputPanel({
       </View>
       
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Top 3 Products</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Products ({topPicks.length})</Text>
+          <TouchableOpacity style={styles.addButton} onPress={addProduct}>
+            <Plus size={16} color="#ffffff" />
+            <Text style={styles.addButtonText}>Add Product</Text>
+          </TouchableOpacity>
+        </View>
         
         {topPicks.map((product, index) => (
           <View key={product.id} style={styles.productCard}>
-            <Text style={styles.productCardTitle}>Product {index + 1}</Text>
+            <View style={styles.productCardHeader}>
+              <Text style={styles.productCardTitle}>Product {index + 1}</Text>
+              {topPicks.length > 1 && (
+                <TouchableOpacity 
+                  style={styles.removeButton} 
+                  onPress={() => removeProduct(index)}
+                >
+                  <X size={16} color="#ef4444" />
+                </TouchableOpacity>
+              )}
+            </View>
             
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Name</Text>
@@ -241,11 +279,30 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 12,
     color: Colors.light.text,
+  },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.light.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    gap: 6,
+  },
+  addButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "500",
   },
   colorRow: {
     flexDirection: "row",
@@ -286,11 +343,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
+  productCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   productCardTitle: {
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 12,
     color: Colors.light.text,
+  },
+  removeButton: {
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: "#fee2e2",
   },
   inputGroup: {
     marginBottom: 12,

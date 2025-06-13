@@ -23,24 +23,6 @@ const DEFAULT_TOP_PICKS: Product[] = [
     cons: ["Expensive", "Limited ports", "Not easily upgradable"],
     affiliateLink: "https://amazon.com/macbook-pro",
   },
-  {
-    id: 2,
-    name: "Dell XPS 15",
-    imageUrl: "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1632&q=80",
-    tagline: "Perfect balance of performance and portability for Windows users",
-    pros: ["Gorgeous 4K display", "Powerful Intel processor", "Premium design", "Great keyboard"],
-    cons: ["Average battery life", "Can run hot under load", "Expensive upgrades"],
-    affiliateLink: "https://amazon.com/dell-xps-15",
-  },
-  {
-    id: 3,
-    name: "Lenovo ThinkPad X1 Carbon",
-    imageUrl: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    tagline: "Business-class laptop with legendary durability and performance",
-    pros: ["Incredible keyboard", "Lightweight yet durable", "Great battery life", "Excellent security features"],
-    cons: ["Business pricing", "Conservative design", "Average speakers"],
-    affiliateLink: "https://amazon.com/thinkpad-x1-carbon",
-  },
 ];
 
 // Password for accessing the app
