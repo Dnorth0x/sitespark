@@ -58,7 +58,7 @@ export default function InputPanel({
       pros: [],
       cons: [],
       affiliateLink: "",
-      specifications: [],
+      specifications: [], // CRITICAL: Always initialize specifications as empty array
     };
     
     setTopPicks([...topPicks, newProduct]);
@@ -79,20 +79,30 @@ export default function InputPanel({
     };
     
     const updatedProducts = [...topPicks];
+    // Ensure specifications array exists before adding to it
+    if (!updatedProducts[productIndex].specifications) {
+      updatedProducts[productIndex].specifications = [];
+    }
     updatedProducts[productIndex].specifications = [...updatedProducts[productIndex].specifications, newSpec];
     setTopPicks(updatedProducts);
   };
 
   const removeSpecification = (productIndex: number, specIndex: number) => {
     const updatedProducts = [...topPicks];
-    updatedProducts[productIndex].specifications = updatedProducts[productIndex].specifications.filter((_, i) => i !== specIndex);
-    setTopPicks(updatedProducts);
+    // Ensure specifications array exists before filtering
+    if (updatedProducts[productIndex].specifications) {
+      updatedProducts[productIndex].specifications = updatedProducts[productIndex].specifications.filter((_, i) => i !== specIndex);
+      setTopPicks(updatedProducts);
+    }
   };
 
   const handleSpecificationChange = (productIndex: number, specIndex: number, field: 'key' | 'value', value: string) => {
     const updatedProducts = [...topPicks];
-    updatedProducts[productIndex].specifications[specIndex][field] = value;
-    setTopPicks(updatedProducts);
+    // Ensure specifications array exists before updating
+    if (updatedProducts[productIndex].specifications && updatedProducts[productIndex].specifications[specIndex]) {
+      updatedProducts[productIndex].specifications[specIndex][field] = value;
+      setTopPicks(updatedProducts);
+    }
   };
 
   if (isLoading) {
@@ -284,7 +294,8 @@ export default function InputPanel({
                 </TouchableOpacity>
               </View>
               
-              {product.specifications.map((spec, specIndex) => (
+              {/* DEFENSIVE PROGRAMMING: Ensure specifications exists and is an array */}
+              {(product.specifications || []).map((spec, specIndex) => (
                 <View key={spec.id} style={styles.specificationRow}>
                   <TextInput
                     style={[styles.input, styles.specKeyInput]}
@@ -307,7 +318,7 @@ export default function InputPanel({
                 </View>
               ))}
               
-              {product.specifications.length === 0 && (
+              {(!product.specifications || product.specifications.length === 0) && (
                 <Text style={styles.noSpecsText}>No specifications added yet. Click "Add Spec" to get started.</Text>
               )}
             </View>
