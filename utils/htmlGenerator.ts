@@ -1,9 +1,9 @@
 import { Product } from "@/types";
 
 // Main generator function that calls the appropriate template generator
-export const generateHtml = (nicheTitle: string, products: Product[], template: string = "classic", primaryColor: string = "#4f46e5"): string => {
+export const generateHtml = (nicheTitle: string, products: Product[], template: string = "classic", primaryColor: string = "#4f46e5", secondaryColor: string = "#10b981"): string => {
   // Create the HTML head with meta tags and styles
-  const head = generateHtmlHead(nicheTitle, template, primaryColor);
+  const head = generateHtmlHead(nicheTitle, template, primaryColor, secondaryColor);
   
   // Generate the appropriate template based on selection
   let bodyContent = "";
@@ -33,12 +33,14 @@ export const generateHtml = (nicheTitle: string, products: Product[], template: 
 };
 
 // Generate the HTML head with appropriate styles based on template
-const generateHtmlHead = (nicheTitle: string, template: string, primaryColor: string): string => {
+const generateHtmlHead = (nicheTitle: string, template: string, primaryColor: string, secondaryColor: string): string => {
   // CSS variables and common styles for all templates
   const commonStyles = `
     :root {
       --primary-color: ${primaryColor};
       --primary-color-hover: ${adjustColorBrightness(primaryColor, -20)};
+      --secondary-color: ${secondaryColor};
+      --secondary-color-light: ${adjustColorBrightness(secondaryColor, 40)};
     }
     body { 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
@@ -54,9 +56,16 @@ const generateHtmlHead = (nicheTitle: string, template: string, primaryColor: st
     .hero { 
       text-align: center; 
       padding: 40px 20px; 
-      background-color: #eef2ff; 
+      background-color: var(--secondary-color-light); 
       border-radius: 8px; 
       margin-bottom: 30px;
+      border: 2px solid var(--secondary-color);
+    }
+    .hero h1 {
+      color: var(--secondary-color);
+      margin: 0;
+      font-size: 2.5rem;
+      font-weight: 700;
     }
     h1 {
       margin-top: 0;

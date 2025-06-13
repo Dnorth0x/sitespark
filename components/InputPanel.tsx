@@ -10,6 +10,8 @@ interface InputPanelProps {
   setTopPicks: (products: Product[]) => void;
   primaryColor: string;
   setPrimaryColor: (color: string) => void;
+  secondaryColor: string;
+  setSecondaryColor: (color: string) => void;
   isLoading?: boolean;
 }
 
@@ -20,6 +22,8 @@ export default function InputPanel({
   setTopPicks,
   primaryColor,
   setPrimaryColor,
+  secondaryColor,
+  setSecondaryColor,
   isLoading = false
 }: InputPanelProps) {
   
@@ -29,7 +33,7 @@ export default function InputPanel({
     // Handle pros and cons arrays (comma-separated strings)
     if (field === 'pros' || field === 'cons') {
       if (typeof value === 'string') {
-        // Split by comma and trim each item
+        // Split by comma and trim each item, filter out empty strings
         updatedProducts[index][field] = value.split(',').map(item => item.trim()).filter(item => item !== '');
       } else {
         updatedProducts[index][field] = value;
@@ -66,36 +70,72 @@ export default function InputPanel({
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Primary Color</Text>
-        <View style={styles.colorPickerContainer}>
-          {Platform.OS === "web" ? (
-            <input
-              type="color"
-              value={primaryColor}
-              onChange={(e) => setPrimaryColor(e.target.value)}
-              style={{
-                width: 60,
-                height: 40,
-                border: "1px solid #d1d5db",
-                borderRadius: 6,
-                cursor: "pointer",
-                backgroundColor: "transparent"
-              }}
-            />
-          ) : (
-            <View style={[styles.colorPreview, { backgroundColor: primaryColor }]} />
-          )}
-          <TextInput
-            style={[styles.input, { flex: 1 }]}
-            value={primaryColor}
-            onChangeText={setPrimaryColor}
-            placeholder="#4f46e5"
-          />
+        <Text style={styles.sectionTitle}>Color Customization</Text>
+        
+        <View style={styles.colorRow}>
+          <View style={styles.colorGroup}>
+            <Text style={styles.colorLabel}>Primary Color</Text>
+            <View style={styles.colorPickerContainer}>
+              {Platform.OS === "web" ? (
+                <input
+                  type="color"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  style={{
+                    width: 60,
+                    height: 40,
+                    border: "1px solid #d1d5db",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                    backgroundColor: "transparent"
+                  }}
+                />
+              ) : (
+                <View style={[styles.colorPreview, { backgroundColor: primaryColor }]} />
+              )}
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={primaryColor}
+                onChangeText={setPrimaryColor}
+                placeholder="#4f46e5"
+              />
+            </View>
+          </View>
+          
+          <View style={styles.colorGroup}>
+            <Text style={styles.colorLabel}>Secondary Color</Text>
+            <View style={styles.colorPickerContainer}>
+              {Platform.OS === "web" ? (
+                <input
+                  type="color"
+                  value={secondaryColor}
+                  onChange={(e) => setSecondaryColor(e.target.value)}
+                  style={{
+                    width: 60,
+                    height: 40,
+                    border: "1px solid #d1d5db",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                    backgroundColor: "transparent"
+                  }}
+                />
+              ) : (
+                <View style={[styles.colorPreview, { backgroundColor: secondaryColor }]} />
+              )}
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={secondaryColor}
+                onChangeText={setSecondaryColor}
+                placeholder="#10b981"
+              />
+            </View>
+          </View>
         </View>
+        
         <Text style={styles.helperText}>
           {Platform.OS === "web" 
-            ? "Use the color picker or enter a hex color code" 
-            : "Enter a hex color code (e.g., #4f46e5)"
+            ? "Use the color picker or enter hex color codes. Primary color is used for buttons, secondary for hero section." 
+            : "Enter hex color codes (e.g., #4f46e5). Primary color is used for buttons, secondary for hero section."
           }
         </Text>
       </View>
@@ -206,6 +246,20 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 12,
     color: Colors.light.text,
+  },
+  colorRow: {
+    flexDirection: "row",
+    gap: 16,
+    marginBottom: 8,
+  },
+  colorGroup: {
+    flex: 1,
+  },
+  colorLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 8,
+    color: "#374151",
   },
   colorPickerContainer: {
     flexDirection: "row",

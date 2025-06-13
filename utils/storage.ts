@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   NICHE_TITLE: 'sitespark_niche_title',
   TOP_PICKS: 'sitespark_top_picks',
   PRIMARY_COLOR: 'sitespark_primary_color',
+  SECONDARY_COLOR: 'sitespark_secondary_color',
   SELECTED_TEMPLATE: 'sitespark_selected_template',
 } as const;
 

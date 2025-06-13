@@ -1,8 +1,7 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView } from "react-native";
-import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
-import { AlertCircle, ChevronDown } from "lucide-react-native";
+import { AlertCircle, ChevronDown, Copy } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { Picker } from "@react-native-picker/picker";
 
@@ -29,9 +28,24 @@ export default function Actions({
         await Haptics.selectionAsync();
       }
       
-      await Clipboard.setStringAsync(generatedHtml);
+      // Use the Clipboard API for web, or navigator.clipboard as fallback
+      if (Platform.OS === "web") {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(generatedHtml);
+        } else {
+          // Fallback for older browsers
+          const textArea = document.createElement("textarea");
+          textArea.value = generatedHtml;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textArea);
+        }
+      } else {
+        // For mobile platforms, we'll use a simple alert since expo-clipboard isn't available
+        console.log("HTML content:", generatedHtml);
+      }
       
-      // You could add a toast notification here
       alert("HTML copied to clipboard!");
     } catch (error) {
       console.error("Failed to copy to clipboard:", error);
@@ -48,8 +62,7 @@ export default function Actions({
             <TouchableOpacity 
               style={styles.pickerButton}
               onPress={() => {
-                // On iOS, we'd typically show an ActionSheet or modal
-                // For simplicity, we'll just cycle through options
+                // On iOS, we'll cycle through options
                 const templates = ["classic", "table", "grid"];
                 const currentIndex = templates.indexOf(selectedTemplate);
                 const nextIndex = (currentIndex + 1) % templates.length;
@@ -94,11 +107,12 @@ export default function Actions({
           onPress={copyToClipboard}
           disabled={!generatedHtml}
         >
+          <Copy size={16} color={!generatedHtml ? "#9ca3af" : "#4f46e5"} style={styles.copyIcon} />
           <Text style={[
             styles.copyButtonText,
             !generatedHtml ? styles.disabledButtonText : null
           ]}>
-            Copy HTML to Clipboard
+            Copy HTML
           </Text>
         </TouchableOpacity>
       </View>
@@ -202,6 +216,12 @@ const styles = StyleSheet.create({
     borderColor: "#4f46e5",
     flex: 1,
     minWidth: 150,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+  },
+  copyIcon: {
+    marginRight: 4,
   },
   copyButtonText: {
     color: "#4f46e5",
