@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView, useWindowDimensions } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView, useWindowDimensions, ActivityIndicator } from "react-native";
 import * as Haptics from "expo-haptics";
 import { AlertCircle, ChevronDown, Copy } from "lucide-react-native";
 import Colors from "@/constants/colors";
@@ -12,6 +12,7 @@ interface ActionsProps {
   onClearData: () => void;
   selectedTemplate: string;
   setSelectedTemplate: (template: string) => void;
+  isGenerating?: boolean;
 }
 
 export default function Actions({ 
@@ -20,7 +21,8 @@ export default function Actions({
   saveStatus, 
   onClearData,
   selectedTemplate,
-  setSelectedTemplate
+  setSelectedTemplate,
+  isGenerating = false
 }: ActionsProps) {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
@@ -98,27 +100,39 @@ export default function Actions({
       
       <View style={[styles.actionsRow, isMobile && styles.mobileActionsRow]}>
         <TouchableOpacity 
-          style={[styles.generateButton, isMobile && styles.mobileGenerateButton]} 
+          style={[
+            styles.generateButton, 
+            isMobile && styles.mobileGenerateButton,
+            isGenerating && styles.disabledButton
+          ]} 
           onPress={onGenerateHtml}
+          disabled={isGenerating}
         >
-          <Text style={styles.generateButtonText}>
-            {isMobile ? "Generate & Preview" : "Generate Site HTML"}
-          </Text>
+          {isGenerating ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#ffffff" />
+              <Text style={styles.generateButtonText}>Generating...</Text>
+            </View>
+          ) : (
+            <Text style={styles.generateButtonText}>
+              {isMobile ? "Generate & Preview" : "Generate Site HTML"}
+            </Text>
+          )}
         </TouchableOpacity>
         
         <TouchableOpacity 
           style={[
             styles.copyButton, 
             isMobile && styles.mobileCopyButton,
-            !generatedHtml ? styles.disabledButton : null
+            (!generatedHtml || isGenerating) ? styles.disabledButton : null
           ]} 
           onPress={copyToClipboard}
-          disabled={!generatedHtml}
+          disabled={!generatedHtml || isGenerating}
         >
-          <Copy size={16} color={!generatedHtml ? "#9ca3af" : "#4f46e5"} style={styles.copyIcon} />
+          <Copy size={16} color={(!generatedHtml || isGenerating) ? "#9ca3af" : "#4f46e5"} style={styles.copyIcon} />
           <Text style={[
             styles.copyButtonText,
-            !generatedHtml ? styles.disabledButtonText : null
+            (!generatedHtml || isGenerating) ? styles.disabledButtonText : null
           ]}>
             Copy HTML
           </Text>
@@ -141,11 +155,21 @@ export default function Actions({
         )}
         
         <TouchableOpacity 
-          style={[styles.clearButton, isMobile && styles.mobileClearButton]} 
+          style={[
+            styles.clearButton, 
+            isMobile && styles.mobileClearButton,
+            isGenerating && styles.disabledButton
+          ]} 
           onPress={onClearData}
+          disabled={isGenerating}
         >
-          <AlertCircle size={16} color="#ef4444" style={styles.clearIcon} />
-          <Text style={styles.clearButtonText}>Clear My Data</Text>
+          <AlertCircle size={16} color={isGenerating ? "#9ca3af" : "#ef4444"} style={styles.clearIcon} />
+          <Text style={[
+            styles.clearButtonText,
+            isGenerating && styles.disabledButtonText
+          ]}>
+            Clear My Data
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -234,6 +258,11 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   copyButton: {
     backgroundColor: "#ffffff",

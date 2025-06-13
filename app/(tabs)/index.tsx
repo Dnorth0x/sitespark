@@ -92,6 +92,7 @@ export default function SiteSparkApp() {
   const [saveStatus, setSaveStatus] = useState<string>("idle");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("classic");
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   // Check authentication on app load
   useEffect(() => {
@@ -226,14 +227,26 @@ export default function SiteSparkApp() {
     }
   };
 
-  // Generate HTML function
-  const handleGenerateHtml = () => {
-    const html = generateHtml(nicheTitle, topPicks, selectedTemplate, primaryColor, secondaryColor);
-    setGeneratedHtml(html);
-    
-    // On mobile, automatically switch to preview after generating
-    if (isMobile) {
-      setActiveMobileView('preview');
+  // Generate HTML function (now async)
+  const handleGenerateHtml = async () => {
+    try {
+      setIsGenerating(true);
+      const html = await generateHtml(nicheTitle, topPicks, selectedTemplate, primaryColor, secondaryColor);
+      setGeneratedHtml(html);
+      
+      // On mobile, automatically switch to preview after generating
+      if (isMobile) {
+        setActiveMobileView('preview');
+      }
+    } catch (error) {
+      console.error("Error generating HTML:", error);
+      Alert.alert(
+        "Generation Error",
+        "Failed to generate HTML. Please try again or select a different template.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -426,6 +439,7 @@ export default function SiteSparkApp() {
                   onClearData={handleClearData}
                   selectedTemplate={selectedTemplate}
                   setSelectedTemplate={setSelectedTemplate}
+                  isGenerating={isGenerating}
                 />
               </View>
               
@@ -461,6 +475,7 @@ export default function SiteSparkApp() {
                     onClearData={handleClearData}
                     selectedTemplate={selectedTemplate}
                     setSelectedTemplate={setSelectedTemplate}
+                    isGenerating={isGenerating}
                   />
                 </View>
               ) : (
