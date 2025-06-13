@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, Platform, useWindowDimensions, Alert, Text, TextInput, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Platform, useWindowDimensions, Alert, Text, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
 import { Stack } from "expo-router";
 import { Product } from "@/types";
 import InputPanel from "@/components/InputPanel";
@@ -85,6 +85,7 @@ export default function SiteSparkApp() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [passwordInput, setPasswordInput] = useState<string>("");
   const [passwordError, setPasswordError] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Mobile navigation state
   const [activeMobileView, setActiveMobileView] = useState<'form' | 'preview'>('form');
@@ -215,7 +216,14 @@ export default function SiteSparkApp() {
   }, [nicheTitle, topPicks, primaryColor, secondaryColor, selectedTemplate, isLoading, isAuthenticated]);
 
   // Handle password submission
-  const handlePasswordSubmit = () => {
+  const handlePasswordSubmit = async () => {
+    if (isSubmitting) return; // Prevent double submission
+    
+    setIsSubmitting(true);
+    
+    // Add a small delay to show the loading state
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     if (passwordInput === CORRECT_PASSWORD) {
       setIsAuthenticated(true);
       setPasswordError("");
@@ -228,6 +236,8 @@ export default function SiteSparkApp() {
       setPasswordError("Incorrect password. Please try again.");
       setPasswordInput("");
     }
+    
+    setIsSubmitting(false);
   };
 
   // Generate HTML function (now async)
@@ -369,9 +379,10 @@ export default function SiteSparkApp() {
                 setPasswordError("");
               }}
               placeholder="Enter password"
-              secureTextEntry
+              secureTextEntry={true}
               onSubmitEditing={handlePasswordSubmit}
               autoFocus
+              editable={!isSubmitting}
             />
             
             {passwordError ? (
@@ -379,10 +390,23 @@ export default function SiteSparkApp() {
             ) : null}
             
             <TouchableOpacity 
-              style={styles.loginButton} 
+              style={[
+                styles.loginButton,
+                isSubmitting && styles.loginButtonDisabled
+              ]} 
               onPress={handlePasswordSubmit}
+              disabled={isSubmitting}
             >
-              <Text style={styles.loginButtonText}>Access SiteSpark</Text>
+              {isSubmitting ? (
+                <View style={styles.loginButtonContent}>
+                  <ActivityIndicator size="small" color="#ffffff" />
+                  <Text style={[styles.loginButtonText, { marginLeft: 8 }]}>
+                    Verifying...
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.loginButtonText}>Access SiteSpark</Text>
+              )}
             </TouchableOpacity>
             
             <Text style={styles.hintText}>
@@ -643,6 +667,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 16,
+  },
+  loginButtonDisabled: {
+    backgroundColor: "#9ca3af",
+  },
+  loginButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   loginButtonText: {
     color: "#ffffff",
