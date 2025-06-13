@@ -11,6 +11,7 @@ import storage, { STORAGE_KEYS } from "@/utils/storage";
 
 // Default data to use when no saved data exists
 const DEFAULT_NICHE_TITLE = "Best Laptops of 2025";
+const DEFAULT_PRIMARY_COLOR = "#4f46e5";
 const DEFAULT_TOP_PICKS: Product[] = [
   {
     id: 1,
@@ -48,6 +49,7 @@ export default function SiteSparkApp() {
   // Initialize state with loading placeholders
   const [nicheTitle, setNicheTitle] = useState<string>(DEFAULT_NICHE_TITLE);
   const [topPicks, setTopPicks] = useState<Product[]>(DEFAULT_TOP_PICKS);
+  const [primaryColor, setPrimaryColor] = useState<string>(DEFAULT_PRIMARY_COLOR);
   const [generatedHtml, setGeneratedHtml] = useState<string>("");
   const [saveStatus, setSaveStatus] = useState<string>("idle");
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -69,6 +71,12 @@ export default function SiteSparkApp() {
         const savedTopPicks = await storage.getItem(STORAGE_KEYS.TOP_PICKS);
         if (savedTopPicks) {
           setTopPicks(JSON.parse(savedTopPicks));
+        }
+        
+        // Load primary color
+        const savedPrimaryColor = await storage.getItem(STORAGE_KEYS.PRIMARY_COLOR);
+        if (savedPrimaryColor) {
+          setPrimaryColor(savedPrimaryColor);
         }
         
         // Load selected template
@@ -101,6 +109,9 @@ export default function SiteSparkApp() {
         // Save top picks
         await storage.setItem(STORAGE_KEYS.TOP_PICKS, JSON.stringify(topPicks));
         
+        // Save primary color
+        await storage.setItem(STORAGE_KEYS.PRIMARY_COLOR, primaryColor);
+        
         // Save selected template
         await storage.setItem(STORAGE_KEYS.SELECTED_TEMPLATE, selectedTemplate);
         
@@ -125,11 +136,11 @@ export default function SiteSparkApp() {
     };
     
     saveData();
-  }, [nicheTitle, topPicks, selectedTemplate, isLoading]);
+  }, [nicheTitle, topPicks, primaryColor, selectedTemplate, isLoading]);
 
   // Generate HTML function
   const handleGenerateHtml = () => {
-    const html = generateHtml(nicheTitle, topPicks, selectedTemplate);
+    const html = generateHtml(nicheTitle, topPicks, selectedTemplate, primaryColor);
     setGeneratedHtml(html);
   };
 
@@ -155,11 +166,13 @@ export default function SiteSparkApp() {
     try {
       await storage.removeItem(STORAGE_KEYS.NICHE_TITLE);
       await storage.removeItem(STORAGE_KEYS.TOP_PICKS);
+      await storage.removeItem(STORAGE_KEYS.PRIMARY_COLOR);
       await storage.removeItem(STORAGE_KEYS.SELECTED_TEMPLATE);
       
       // Reset state to defaults
       setNicheTitle(DEFAULT_NICHE_TITLE);
       setTopPicks(DEFAULT_TOP_PICKS);
+      setPrimaryColor(DEFAULT_PRIMARY_COLOR);
       setSelectedTemplate("classic");
       setGeneratedHtml("");
       
@@ -206,6 +219,8 @@ export default function SiteSparkApp() {
               setNicheTitle={setNicheTitle}
               topPicks={topPicks}
               setTopPicks={setTopPicks}
+              primaryColor={primaryColor}
+              setPrimaryColor={setPrimaryColor}
               isLoading={isLoading}
             />
             <Actions

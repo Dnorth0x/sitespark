@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, Platform } from "react-native";
 import { Product } from "@/types";
 import Colors from "@/constants/colors";
 
@@ -8,6 +8,8 @@ interface InputPanelProps {
   setNicheTitle: (title: string) => void;
   topPicks: Product[];
   setTopPicks: (products: Product[]) => void;
+  primaryColor: string;
+  setPrimaryColor: (color: string) => void;
   isLoading?: boolean;
 }
 
@@ -16,6 +18,8 @@ export default function InputPanel({
   setNicheTitle, 
   topPicks, 
   setTopPicks,
+  primaryColor,
+  setPrimaryColor,
   isLoading = false
 }: InputPanelProps) {
   
@@ -59,6 +63,41 @@ export default function InputPanel({
           onChangeText={setNicheTitle}
           placeholder="Enter your niche title (e.g., Best Laptops of 2025)"
         />
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Primary Color</Text>
+        <View style={styles.colorPickerContainer}>
+          {Platform.OS === "web" ? (
+            <input
+              type="color"
+              value={primaryColor}
+              onChange={(e) => setPrimaryColor(e.target.value)}
+              style={{
+                width: 60,
+                height: 40,
+                border: "1px solid #d1d5db",
+                borderRadius: 6,
+                cursor: "pointer",
+                backgroundColor: "transparent"
+              }}
+            />
+          ) : (
+            <View style={[styles.colorPreview, { backgroundColor: primaryColor }]} />
+          )}
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            value={primaryColor}
+            onChangeText={setPrimaryColor}
+            placeholder="#4f46e5"
+          />
+        </View>
+        <Text style={styles.helperText}>
+          {Platform.OS === "web" 
+            ? "Use the color picker or enter a hex color code" 
+            : "Enter a hex color code (e.g., #4f46e5)"
+          }
+        </Text>
       </View>
       
       <View style={styles.section}>
@@ -167,6 +206,23 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 12,
     color: Colors.light.text,
+  },
+  colorPickerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  colorPreview: {
+    width: 60,
+    height: 40,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+  },
+  helperText: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginTop: 6,
   },
   productCard: {
     backgroundColor: "#f9fafb",

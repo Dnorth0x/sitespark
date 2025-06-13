@@ -1,9 +1,9 @@
 import { Product } from "@/types";
 
 // Main generator function that calls the appropriate template generator
-export const generateHtml = (nicheTitle: string, products: Product[], template: string = "classic"): string => {
+export const generateHtml = (nicheTitle: string, products: Product[], template: string = "classic", primaryColor: string = "#4f46e5"): string => {
   // Create the HTML head with meta tags and styles
-  const head = generateHtmlHead(nicheTitle, template);
+  const head = generateHtmlHead(nicheTitle, template, primaryColor);
   
   // Generate the appropriate template based on selection
   let bodyContent = "";
@@ -33,9 +33,13 @@ export const generateHtml = (nicheTitle: string, products: Product[], template: 
 };
 
 // Generate the HTML head with appropriate styles based on template
-const generateHtmlHead = (nicheTitle: string, template: string): string => {
-  // Common styles for all templates
+const generateHtmlHead = (nicheTitle: string, template: string, primaryColor: string): string => {
+  // CSS variables and common styles for all templates
   const commonStyles = `
+    :root {
+      --primary-color: ${primaryColor};
+      --primary-color-hover: ${adjustColorBrightness(primaryColor, -20)};
+    }
     body { 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
       margin: 0; 
@@ -68,7 +72,7 @@ const generateHtmlHead = (nicheTitle: string, template: string): string => {
     }
     .buy-button { 
       display: inline-block; 
-      background-color: #4f46e5; 
+      background-color: var(--primary-color); 
       color: #ffffff; 
       padding: 12px 24px; 
       text-decoration: none; 
@@ -76,9 +80,10 @@ const generateHtmlHead = (nicheTitle: string, template: string): string => {
       font-weight: bold; 
       text-align: center; 
       margin-top: 15px;
+      transition: background-color 0.2s ease;
     }
     .buy-button:hover {
-      background-color: #4338ca;
+      background-color: var(--primary-color-hover);
     }
     ul { 
       padding-left: 20px; 
@@ -105,7 +110,7 @@ const generateHtmlHead = (nicheTitle: string, template: string): string => {
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         th {
-          background-color: #4f46e5;
+          background-color: var(--primary-color);
           color: white;
           text-align: left;
           padding: 16px;
@@ -263,6 +268,26 @@ const generateHtmlHead = (nicheTitle: string, template: string): string => {
     ${templateStyles}
   </style>
 </head>`;
+};
+
+// Helper function to adjust color brightness
+const adjustColorBrightness = (hex: string, percent: number): string => {
+  // Remove the hash if it exists
+  const color = hex.replace('#', '');
+  
+  // Parse the hex color
+  const num = parseInt(color, 16);
+  const amt = Math.round(2.55 * percent);
+  const R = (num >> 16) + amt;
+  const G = (num >> 8 & 0x00FF) + amt;
+  const B = (num & 0x0000FF) + amt;
+  
+  // Ensure values stay within 0-255 range
+  const newR = Math.max(0, Math.min(255, R));
+  const newG = Math.max(0, Math.min(255, G));
+  const newB = Math.max(0, Math.min(255, B));
+  
+  return `#${((newR << 16) | (newG << 8) | newB).toString(16).padStart(6, '0')}`;
 };
 
 // Classic template - original card layout
