@@ -63,7 +63,7 @@ export default function Actions({
               style={styles.pickerButton}
               onPress={() => {
                 // On iOS, we'll cycle through options
-                const templates = ["classic", "table", "grid"];
+                const templates = ["classic", "table", "grid", "analyst"];
                 const currentIndex = templates.indexOf(selectedTemplate);
                 const nextIndex = (currentIndex + 1) % templates.length;
                 setSelectedTemplate(templates[nextIndex]);
@@ -72,7 +72,8 @@ export default function Actions({
               <Text style={styles.pickerButtonText}>
                 {selectedTemplate === "classic" ? "Classic Layout" : 
                  selectedTemplate === "table" ? "Comparison Table" : 
-                 "Modern Grid"}
+                 selectedTemplate === "grid" ? "Modern Grid" :
+                 "Analyst Layout"}
               </Text>
               <ChevronDown size={16} color="#4f46e5" />
             </TouchableOpacity>
@@ -86,6 +87,7 @@ export default function Actions({
               <Picker.Item label="Classic Layout" value="classic" />
               <Picker.Item label="Comparison Table" value="table" />
               <Picker.Item label="Modern Grid" value="grid" />
+              <Picker.Item label="Analyst Layout" value="analyst" />
             </Picker>
           )}
         </View>

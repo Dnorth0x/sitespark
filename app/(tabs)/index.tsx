@@ -22,6 +22,14 @@ const DEFAULT_TOP_PICKS: Product[] = [
     pros: ["Exceptional battery life", "Powerful M3 processor", "Beautiful Retina display", "Premium build quality"],
     cons: ["Expensive", "Limited ports", "Not easily upgradable"],
     affiliateLink: "https://amazon.com/macbook-pro",
+    specifications: [
+      { id: 1, key: "Processor", value: "Apple M3 Pro 12-core CPU" },
+      { id: 2, key: "Memory", value: "18GB Unified Memory" },
+      { id: 3, key: "Storage", value: "512GB SSD" },
+      { id: 4, key: "Display", value: "14.2-inch Liquid Retina XDR" },
+      { id: 5, key: "Battery Life", value: "Up to 18 hours" },
+      { id: 6, key: "Weight", value: "3.5 lbs (1.6 kg)" }
+    ]
   },
 ];
 
@@ -81,7 +89,13 @@ export default function SiteSparkApp() {
         // Load top picks
         const savedTopPicks = await storage.getItem(STORAGE_KEYS.TOP_PICKS);
         if (savedTopPicks) {
-          setTopPicks(JSON.parse(savedTopPicks));
+          const parsedTopPicks = JSON.parse(savedTopPicks);
+          // Ensure specifications exist for backward compatibility
+          const updatedTopPicks = parsedTopPicks.map((product: any) => ({
+            ...product,
+            specifications: product.specifications || []
+          }));
+          setTopPicks(updatedTopPicks);
         }
         
         // Load primary color

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, Platform, TouchableOpacity } from "react-native";
-import { Product } from "@/types";
+import { Product, Specification } from "@/types";
 import Colors from "@/constants/colors";
 import { Plus, X } from "lucide-react-native";
 
@@ -28,7 +28,7 @@ export default function InputPanel({
   isLoading = false
 }: InputPanelProps) {
   
-  const handleProductChange = (index: number, field: keyof Product, value: string | string[]) => {
+  const handleProductChange = (index: number, field: keyof Product, value: string | string[] | Specification[]) => {
     const updatedProducts = [...topPicks];
     
     // Handle pros and cons arrays (comma-separated strings)
@@ -37,8 +37,10 @@ export default function InputPanel({
         // Split by comma and trim each item, filter out empty strings
         updatedProducts[index][field] = value.split(',').map(item => item.trim()).filter(item => item !== '');
       } else {
-        updatedProducts[index][field] = value;
+        updatedProducts[index][field] = value as string[];
       }
+    } else if (field === 'specifications') {
+      updatedProducts[index][field] = value as Specification[];
     } else {
       // @ts-ignore - TypeScript doesn't know that value can be assigned to the field
       updatedProducts[index][field] = value;
@@ -56,6 +58,7 @@ export default function InputPanel({
       pros: [],
       cons: [],
       affiliateLink: "",
+      specifications: [],
     };
     
     setTopPicks([...topPicks, newProduct]);
@@ -66,6 +69,30 @@ export default function InputPanel({
       const updatedProducts = topPicks.filter((_, i) => i !== index);
       setTopPicks(updatedProducts);
     }
+  };
+
+  const addSpecification = (productIndex: number) => {
+    const newSpec: Specification = {
+      id: Date.now(),
+      key: "",
+      value: ""
+    };
+    
+    const updatedProducts = [...topPicks];
+    updatedProducts[productIndex].specifications = [...updatedProducts[productIndex].specifications, newSpec];
+    setTopPicks(updatedProducts);
+  };
+
+  const removeSpecification = (productIndex: number, specIndex: number) => {
+    const updatedProducts = [...topPicks];
+    updatedProducts[productIndex].specifications = updatedProducts[productIndex].specifications.filter((_, i) => i !== specIndex);
+    setTopPicks(updatedProducts);
+  };
+
+  const handleSpecificationChange = (productIndex: number, specIndex: number, field: 'key' | 'value', value: string) => {
+    const updatedProducts = [...topPicks];
+    updatedProducts[productIndex].specifications[specIndex][field] = value;
+    setTopPicks(updatedProducts);
   };
 
   if (isLoading) {
@@ -244,6 +271,46 @@ export default function InputPanel({
                 placeholder="https://amazon.com/product"
               />
             </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.specificationHeader}>
+                <Text style={styles.label}>Specifications</Text>
+                <TouchableOpacity 
+                  style={styles.addSpecButton} 
+                  onPress={() => addSpecification(index)}
+                >
+                  <Plus size={14} color="#ffffff" />
+                  <Text style={styles.addSpecButtonText}>Add Spec</Text>
+                </TouchableOpacity>
+              </View>
+              
+              {product.specifications.map((spec, specIndex) => (
+                <View key={spec.id} style={styles.specificationRow}>
+                  <TextInput
+                    style={[styles.input, styles.specKeyInput]}
+                    value={spec.key}
+                    onChangeText={(value) => handleSpecificationChange(index, specIndex, 'key', value)}
+                    placeholder="Key (e.g., Processor)"
+                  />
+                  <TextInput
+                    style={[styles.input, styles.specValueInput]}
+                    value={spec.value}
+                    onChangeText={(value) => handleSpecificationChange(index, specIndex, 'value', value)}
+                    placeholder="Value (e.g., Intel i7)"
+                  />
+                  <TouchableOpacity 
+                    style={styles.removeSpecButton} 
+                    onPress={() => removeSpecification(index, specIndex)}
+                  >
+                    <X size={14} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+              
+              {product.specifications.length === 0 && (
+                <Text style={styles.noSpecsText}>No specifications added yet. Click "Add Spec" to get started.</Text>
+              )}
+            </View>
           </View>
         ))}
       </View>
@@ -374,5 +441,51 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     fontSize: 14,
+  },
+  specificationHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  addSpecButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#10b981",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    gap: 4,
+  },
+  addSpecButtonText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  specificationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  specKeyInput: {
+    flex: 1,
+  },
+  specValueInput: {
+    flex: 2,
+  },
+  removeSpecButton: {
+    padding: 6,
+    borderRadius: 4,
+    backgroundColor: "#fee2e2",
+  },
+  noSpecsText: {
+    fontSize: 12,
+    color: "#6b7280",
+    fontStyle: "italic",
+    textAlign: "center",
+    padding: 12,
+    backgroundColor: "#f3f4f6",
+    borderRadius: 6,
   },
 });

@@ -14,6 +14,9 @@ export const generateHtml = (nicheTitle: string, products: Product[], template: 
     case "grid":
       bodyContent = generateGridTemplate(nicheTitle, products);
       break;
+    case "analyst":
+      bodyContent = generateAnalystTemplate(nicheTitle, products);
+      break;
     case "classic":
     default:
       bodyContent = generateClassicTemplate(nicheTitle, products);
@@ -218,6 +221,169 @@ const generateHtmlHead = (nicheTitle: string, template: string, primaryColor: st
         }
       `;
       break;
+    case "analyst":
+      templateStyles = `
+        .analyst-container {
+          margin-bottom: 40px;
+        }
+        .analyst-product {
+          background-color: #ffffff;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          margin-bottom: 30px;
+        }
+        .analyst-header {
+          display: flex;
+          align-items: center;
+          padding: 24px;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .analyst-image {
+          width: 120px;
+          height: 120px;
+          object-fit: cover;
+          border-radius: 8px;
+          margin-right: 24px;
+        }
+        .analyst-title-section {
+          flex: 1;
+        }
+        .analyst-title {
+          font-size: 24px;
+          font-weight: 700;
+          margin-bottom: 8px;
+          color: #1f2937;
+        }
+        .analyst-tagline {
+          font-size: 16px;
+          color: #6b7280;
+          font-style: italic;
+          margin-bottom: 16px;
+        }
+        .analyst-content {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 24px;
+          padding: 24px;
+        }
+        @media (max-width: 768px) {
+          .analyst-content {
+            grid-template-columns: 1fr;
+          }
+          .analyst-header {
+            flex-direction: column;
+            text-align: center;
+          }
+          .analyst-image {
+            margin-right: 0;
+            margin-bottom: 16px;
+          }
+        }
+        .specifications-section {
+          background-color: #f8fafc;
+          border-radius: 8px;
+          padding: 20px;
+        }
+        .specifications-title {
+          font-size: 18px;
+          font-weight: 600;
+          margin-bottom: 16px;
+          color: #374151;
+          border-bottom: 2px solid var(--primary-color);
+          padding-bottom: 8px;
+        }
+        .specifications-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .specifications-table tr {
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .specifications-table tr:last-child {
+          border-bottom: none;
+        }
+        .spec-key {
+          font-weight: 600;
+          color: #374151;
+          padding: 8px 12px 8px 0;
+          width: 40%;
+        }
+        .spec-value {
+          color: #6b7280;
+          padding: 8px 0;
+        }
+        .pros-cons-section {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .pros-section, .cons-section {
+          background-color: #f8fafc;
+          border-radius: 8px;
+          padding: 16px;
+        }
+        .pros-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #059669;
+          margin-bottom: 12px;
+          display: flex;
+          align-items: center;
+        }
+        .pros-title::before {
+          content: "✓";
+          margin-right: 8px;
+          color: #10b981;
+          font-weight: bold;
+        }
+        .cons-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #dc2626;
+          margin-bottom: 12px;
+          display: flex;
+          align-items: center;
+        }
+        .cons-title::before {
+          content: "✗";
+          margin-right: 8px;
+          color: #ef4444;
+          font-weight: bold;
+        }
+        .pros-cons-section ul {
+          margin: 0;
+          padding-left: 0;
+          list-style: none;
+        }
+        .pros-cons-section li {
+          margin-bottom: 6px;
+          padding-left: 16px;
+          position: relative;
+          font-size: 14px;
+        }
+        .pros-section li::before {
+          content: "•";
+          color: #10b981;
+          position: absolute;
+          left: 0;
+          font-weight: bold;
+        }
+        .cons-section li::before {
+          content: "•";
+          color: #ef4444;
+          position: absolute;
+          left: 0;
+          font-weight: bold;
+        }
+        .analyst-footer {
+          padding: 24px;
+          text-align: center;
+          border-top: 1px solid #e5e7eb;
+          background-color: #f9fafb;
+        }
+      `;
+      break;
     case "classic":
     default:
       templateStyles = `
@@ -418,4 +584,63 @@ const generateGridTemplate = (nicheTitle: string, products: Product[]): string =
   }).join("");
 
   return `${heroSection}<div class="products-grid">${gridCards}</div>`;
+};
+
+// Analyst template - professional layout with specifications
+const generateAnalystTemplate = (nicheTitle: string, products: Product[]): string => {
+  const heroSection = `<div class="hero">
+    <h1>${nicheTitle}</h1>
+  </div>`;
+
+  const analystCards = products.map(product => {
+    const prosListItems = product.pros.map(pro => `<li>${pro}</li>`).join("");
+    const consListItems = product.cons.map(con => `<li>${con}</li>`).join("");
+    
+    // Generate specifications table
+    const specificationsRows = product.specifications.map(spec => 
+      `<tr>
+        <td class="spec-key">${spec.key}</td>
+        <td class="spec-value">${spec.value}</td>
+      </tr>`
+    ).join("");
+
+    const specificationsTable = product.specifications.length > 0 ? `
+      <table class="specifications-table">
+        ${specificationsRows}
+      </table>
+    ` : `<p style="color: #6b7280; font-style: italic;">No specifications available</p>`;
+
+    return `
+<div class="analyst-product">
+  <div class="analyst-header">
+    <img src="${product.imageUrl}" alt="${product.name}" class="analyst-image">
+    <div class="analyst-title-section">
+      <h2 class="analyst-title">${product.name}</h2>
+      <p class="analyst-tagline">${product.tagline}</p>
+      <a href="${product.affiliateLink}" class="buy-button" target="_blank" rel="noopener noreferrer">Check Price</a>
+    </div>
+  </div>
+  
+  <div class="analyst-content">
+    <div class="specifications-section">
+      <h3 class="specifications-title">Technical Specifications</h3>
+      ${specificationsTable}
+    </div>
+    
+    <div class="pros-cons-section">
+      <div class="pros-section">
+        <h4 class="pros-title">Advantages</h4>
+        <ul>${prosListItems}</ul>
+      </div>
+      
+      <div class="cons-section">
+        <h4 class="cons-title">Disadvantages</h4>
+        <ul>${consListItems}</ul>
+      </div>
+    </div>
+  </div>
+</div>`;
+  }).join("");
+
+  return `${heroSection}<div class="analyst-container">${analystCards}</div>`;
 };
