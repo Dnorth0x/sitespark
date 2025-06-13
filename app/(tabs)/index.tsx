@@ -344,10 +344,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.light.background,
+    overflow: "hidden",
   },
   content: {
     flex: 1,
     padding: 16,
+    overflow: "hidden",
   },
   rowLayout: {
     flexDirection: "row",
@@ -366,6 +368,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    overflow: "hidden",
   },
   previewSection: {
     flex: 1,
