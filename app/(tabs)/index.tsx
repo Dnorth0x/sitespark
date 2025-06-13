@@ -9,7 +9,10 @@ import { generateHtml } from "@/utils/htmlGenerator";
 import Colors from "@/constants/colors";
 import storage, { STORAGE_KEYS } from "@/utils/storage";
 
-// Default data to use when no saved data exists - THREE complete products
+// Password for accessing the app
+const CORRECT_PASSWORD = "Spark2025!";
+
+// Default data constants - extracted outside component for reset functionality
 const DEFAULT_NICHE_TITLE = "Best Laptops of 2025";
 const DEFAULT_PRIMARY_COLOR = "#4f46e5";
 const DEFAULT_SECONDARY_COLOR = "#10b981";
@@ -67,9 +70,6 @@ const DEFAULT_TOP_PICKS: Product[] = [
   }
 ];
 
-// Password for accessing the app
-const CORRECT_PASSWORD = "Spark2025!";
-
 // Helper function to ensure product has specifications array
 const ensureProductSpecifications = (product: any): Product => ({
   ...product,
@@ -90,7 +90,7 @@ export default function SiteSparkApp() {
   // Mobile navigation state
   const [activeMobileView, setActiveMobileView] = useState<'form' | 'preview'>('form');
 
-  // App state
+  // App state - using default constants
   const [nicheTitle, setNicheTitle] = useState<string>(DEFAULT_NICHE_TITLE);
   const [topPicks, setTopPicks] = useState<Product[]>(DEFAULT_TOP_PICKS);
   const [primaryColor, setPrimaryColor] = useState<string>(DEFAULT_PRIMARY_COLOR);
@@ -263,6 +263,41 @@ export default function SiteSparkApp() {
     }
   };
 
+  // Reset content function
+  const handleResetContent = () => {
+    const confirmMessage = "Are you sure you want to reset all content to the default examples? This will replace your current niche title and products.";
+    
+    if (Platform.OS === "web") {
+      if (confirm(confirmMessage)) {
+        resetToDefaults();
+      }
+    } else {
+      Alert.alert(
+        "Reset Content",
+        confirmMessage,
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Reset", style: "destructive", onPress: resetToDefaults }
+        ]
+      );
+    }
+  };
+
+  const resetToDefaults = () => {
+    setNicheTitle(DEFAULT_NICHE_TITLE);
+    setTopPicks(DEFAULT_TOP_PICKS);
+    setPrimaryColor(DEFAULT_PRIMARY_COLOR);
+    setSecondaryColor(DEFAULT_SECONDARY_COLOR);
+    setSelectedTemplate("classic");
+    setGeneratedHtml("");
+    
+    // Show confirmation
+    setSaveStatus("Content reset");
+    setTimeout(() => {
+      setSaveStatus("idle");
+    }, 2000);
+  };
+
   // Clear all data function
   const handleClearData = () => {
     if (Platform.OS === "web") {
@@ -309,6 +344,14 @@ export default function SiteSparkApp() {
         setSaveStatus("idle");
       }, 2000);
     }
+  };
+
+  // Check if current content matches defaults
+  const isContentDefault = () => {
+    return nicheTitle === DEFAULT_NICHE_TITLE && 
+           JSON.stringify(topPicks) === JSON.stringify(DEFAULT_TOP_PICKS) &&
+           primaryColor === DEFAULT_PRIMARY_COLOR &&
+           secondaryColor === DEFAULT_SECONDARY_COLOR;
   };
 
   // Mobile Navigation Component
@@ -464,6 +507,8 @@ export default function SiteSparkApp() {
                   generatedHtml={generatedHtml}
                   saveStatus={saveStatus}
                   onClearData={handleClearData}
+                  onResetContent={handleResetContent}
+                  isContentDefault={isContentDefault()}
                   selectedTemplate={selectedTemplate}
                   setSelectedTemplate={setSelectedTemplate}
                   isGenerating={isGenerating}
@@ -500,6 +545,8 @@ export default function SiteSparkApp() {
                     generatedHtml={generatedHtml}
                     saveStatus={saveStatus}
                     onClearData={handleClearData}
+                    onResetContent={handleResetContent}
+                    isContentDefault={isContentDefault()}
                     selectedTemplate={selectedTemplate}
                     setSelectedTemplate={setSelectedTemplate}
                     isGenerating={isGenerating}

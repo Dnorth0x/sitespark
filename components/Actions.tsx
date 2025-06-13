@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView, useWindowDimensions, ActivityIndicator } from "react-native";
 import * as Haptics from "expo-haptics";
-import { AlertCircle, ChevronDown, Copy } from "lucide-react-native";
+import { AlertCircle, ChevronDown, Copy, RotateCcw } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { Picker } from "@react-native-picker/picker";
 
@@ -10,6 +10,8 @@ interface ActionsProps {
   generatedHtml: string;
   saveStatus: string;
   onClearData: () => void;
+  onResetContent: () => void;
+  isContentDefault: boolean;
   selectedTemplate: string;
   setSelectedTemplate: (template: string) => void;
   isGenerating?: boolean;
@@ -20,6 +22,8 @@ export default function Actions({
   generatedHtml, 
   saveStatus, 
   onClearData,
+  onResetContent,
+  isContentDefault,
   selectedTemplate,
   setSelectedTemplate,
   isGenerating = false
@@ -147,30 +151,50 @@ export default function Actions({
               saveStatus === "Saving..." && styles.savingStatus,
               saveStatus === "Saved!" && styles.savedStatus,
               (saveStatus === "Save failed" || saveStatus === "Clear failed") && styles.errorStatus,
-              saveStatus === "Data cleared" && styles.clearedStatus,
+              (saveStatus === "Data cleared" || saveStatus === "Content reset") && styles.clearedStatus,
             ]}>
               {saveStatus}
             </Text>
           </View>
         )}
         
-        <TouchableOpacity 
-          style={[
-            styles.clearButton, 
-            isMobile && styles.mobileClearButton,
-            isGenerating && styles.disabledButton
-          ]} 
-          onPress={onClearData}
-          disabled={isGenerating}
-        >
-          <AlertCircle size={16} color={isGenerating ? "#9ca3af" : "#ef4444"} style={styles.clearIcon} />
-          <Text style={[
-            styles.clearButtonText,
-            isGenerating && styles.disabledButtonText
-          ]}>
-            Clear My Data
-          </Text>
-        </TouchableOpacity>
+        <View style={[styles.actionButtonsRow, isMobile && styles.mobileActionButtonsRow]}>
+          <TouchableOpacity 
+            style={[
+              styles.resetButton, 
+              isMobile && styles.mobileResetButton,
+              (isContentDefault || isGenerating) && styles.disabledResetButton
+            ]} 
+            onPress={onResetContent}
+            disabled={isContentDefault || isGenerating}
+          >
+            <RotateCcw size={16} color={(isContentDefault || isGenerating) ? "#9ca3af" : "#f59e0b"} style={styles.resetIcon} />
+            <Text style={[
+              styles.resetButtonText,
+              (isContentDefault || isGenerating) && styles.disabledButtonText
+            ]}>
+              Reset Content
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[
+              styles.clearButton, 
+              isMobile && styles.mobileClearButton,
+              isGenerating && styles.disabledButton
+            ]} 
+            onPress={onClearData}
+            disabled={isGenerating}
+          >
+            <AlertCircle size={16} color={isGenerating ? "#9ca3af" : "#ef4444"} style={styles.clearIcon} />
+            <Text style={[
+              styles.clearButtonText,
+              isGenerating && styles.disabledButtonText
+            ]}>
+              Clear My Data
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -317,6 +341,39 @@ const styles = StyleSheet.create({
   },
   clearedStatus: {
     color: "#f59e0b",
+  },
+  actionButtonsRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  mobileActionButtonsRow: {
+    flexDirection: "column",
+    gap: 8,
+  },
+  resetButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    backgroundColor: "#fef3c7",
+    justifyContent: "center",
+  },
+  mobileResetButton: {
+    paddingVertical: 12,
+    width: "100%",
+  },
+  disabledResetButton: {
+    backgroundColor: "#f9fafb",
+    opacity: 0.6,
+  },
+  resetIcon: {
+    marginRight: 6,
+  },
+  resetButtonText: {
+    color: "#f59e0b",
+    fontSize: 14,
+    fontWeight: "500",
   },
   clearButton: {
     flexDirection: "row",
