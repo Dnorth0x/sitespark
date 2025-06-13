@@ -1,11 +1,12 @@
 import { Product } from "@/types";
-import { generateHtmlHead, generateHeroSection } from "@/utils/htmlGenerator";
+import { generateHtmlHead, generateHeroSection, generateBrandingFooter } from "@/utils/htmlGenerator";
 
 export default function generateAnalystTemplate(
   nicheTitle: string, 
   products: Product[], 
   primaryColor: string, 
-  secondaryColor: string
+  secondaryColor: string,
+  includeBranding: boolean = true
 ): string {
   const templateStyles = `
     .analyst-intro {
@@ -158,8 +159,9 @@ export default function generateAnalystTemplate(
     }
   `;
 
-  const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles);
+  const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles, products);
   const heroSection = generateHeroSection(nicheTitle);
+  const brandingFooter = generateBrandingFooter(includeBranding);
 
   const introText = `
     <div class="analyst-intro">
@@ -237,6 +239,7 @@ export default function generateAnalystTemplate(
     ${introText}
     ${productAnalysisHtml}
   </div>
+  ${brandingFooter}
 </body>
 </html>`;
 }

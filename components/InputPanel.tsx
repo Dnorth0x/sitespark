@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, Platform, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, Platform, TouchableOpacity, Switch } from "react-native";
 import { Product, Specification } from "@/types";
 import Colors from "@/constants/colors";
 import { Plus, X } from "lucide-react-native";
@@ -14,6 +14,8 @@ interface InputPanelProps {
   secondaryColor: string;
   setSecondaryColor: (color: string) => void;
   isLoading?: boolean;
+  includeBranding?: boolean;
+  setIncludeBranding?: (include: boolean) => void;
 }
 
 // Helper function to ensure specifications array exists
@@ -31,7 +33,9 @@ export default function InputPanel({
   setPrimaryColor,
   secondaryColor,
   setSecondaryColor,
-  isLoading = false
+  isLoading = false,
+  includeBranding = true,
+  setIncludeBranding
 }: InputPanelProps) {
   
   const handleProductChange = (index: number, field: keyof Product, value: string | string[] | Specification[]) => {
@@ -205,6 +209,25 @@ export default function InputPanel({
             : "Enter hex color codes (e.g., #4f46e5). Primary color is used for buttons, secondary for hero section."
           }
         </Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Site Options</Text>
+        
+        <View style={styles.optionRow}>
+          <View style={styles.optionContent}>
+            <Text style={styles.optionLabel}>Include SiteSpark Branding</Text>
+            <Text style={styles.optionDescription}>
+              Add a small "Powered by SiteSpark" footer to support our development
+            </Text>
+          </View>
+          <Switch
+            value={includeBranding}
+            onValueChange={setIncludeBranding}
+            trackColor={{ false: "#d1d5db", true: Colors.light.primary }}
+            thumbColor={includeBranding ? "#ffffff" : "#f4f3f4"}
+          />
+        </View>
       </View>
       
       <View style={styles.section}>
@@ -425,6 +448,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6b7280",
     marginTop: 6,
+  },
+  optionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#f9fafb",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  optionContent: {
+    flex: 1,
+    marginRight: 16,
+  },
+  optionLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: Colors.light.text,
+    marginBottom: 4,
+  },
+  optionDescription: {
+    fontSize: 14,
+    color: "#6b7280",
+    lineHeight: 20,
   },
   productCard: {
     backgroundColor: "#f9fafb",

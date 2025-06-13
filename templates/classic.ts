@@ -1,11 +1,12 @@
 import { Product } from "@/types";
-import { generateHtmlHead, generateHeroSection } from "@/utils/htmlGenerator";
+import { generateHtmlHead, generateHeroSection, generateBrandingFooter } from "@/utils/htmlGenerator";
 
 export default function generateClassicTemplate(
   nicheTitle: string, 
   products: Product[], 
   primaryColor: string, 
-  secondaryColor: string
+  secondaryColor: string,
+  includeBranding: boolean = true
 ): string {
   const templateStyles = `
     .product-card { 
@@ -73,8 +74,9 @@ export default function generateClassicTemplate(
     }
   `;
 
-  const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles);
+  const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles, products);
   const heroSection = generateHeroSection(nicheTitle);
+  const brandingFooter = generateBrandingFooter(includeBranding);
 
   const productCardsHtml = products.map(product => {
     const prosListItems = product.pros.map(pro => `<li>${pro}</li>`).join("");
@@ -124,6 +126,7 @@ export default function generateClassicTemplate(
   <div class="container">
     ${heroSection}${productCardsHtml}
   </div>
+  ${brandingFooter}
 </body>
 </html>`;
 }

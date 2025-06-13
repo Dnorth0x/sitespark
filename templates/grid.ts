@@ -1,11 +1,12 @@
 import { Product } from "@/types";
-import { generateHtmlHead, generateHeroSection } from "@/utils/htmlGenerator";
+import { generateHtmlHead, generateHeroSection, generateBrandingFooter } from "@/utils/htmlGenerator";
 
 export default function generateGridTemplate(
   nicheTitle: string, 
   products: Product[], 
   primaryColor: string, 
-  secondaryColor: string
+  secondaryColor: string,
+  includeBranding: boolean = true
 ): string {
   const templateStyles = `
     .products-grid {
@@ -118,8 +119,9 @@ export default function generateGridTemplate(
     }
   `;
 
-  const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles);
+  const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles, products);
   const heroSection = generateHeroSection(nicheTitle);
+  const brandingFooter = generateBrandingFooter(includeBranding);
 
   const gridCardsHtml = products.map(product => {
     const prosListItems = product.pros.slice(0, 3).map(pro => `<li>${pro}</li>`).join("");
@@ -175,6 +177,7 @@ export default function generateGridTemplate(
       ${gridCardsHtml}
     </div>
   </div>
+  ${brandingFooter}
 </body>
 </html>`;
 }

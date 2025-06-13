@@ -7,41 +7,54 @@ export const STORAGE_KEYS = {
   TOP_PICKS: 'sitespark_top_picks',
   PRIMARY_COLOR: 'sitespark_primary_color',
   SECONDARY_COLOR: 'sitespark_secondary_color',
+  INCLUDE_BRANDING: 'sitespark_include_branding',
   SELECTED_TEMPLATE: 'sitespark_selected_template',
 } as const;
 
-// Cross-platform storage interface
-const storage = {
-  async getItem(key: string): Promise<string | null> {
-    if (Platform.OS === 'web') {
+// Storage interface
+interface Storage {
+  getItem: (key: string) => Promise<string | null>;
+  setItem: (key: string, value: string) => Promise<void>;
+  removeItem: (key: string) => Promise<void>;
+}
+
+// Web storage implementation
+const webStorage: Storage = {
+  getItem: async (key: string) => {
+    try {
       return localStorage.getItem(key);
+    } catch (error) {
+      console.error('Error getting item from localStorage:', error);
+      return null;
     }
-    return AsyncStorage.getItem(key);
   },
-
-  async setItem(key: string, value: string): Promise<void> {
-    if (Platform.OS === 'web') {
+  setItem: async (key: string, value: string) => {
+    try {
       localStorage.setItem(key, value);
-      return;
+    } catch (error) {
+      console.error('Error setting item in localStorage:', error);
     }
-    return AsyncStorage.setItem(key, value);
   },
-
-  async removeItem(key: string): Promise<void> {
-    if (Platform.OS === 'web') {
+  removeItem: async (key: string) => {
+    try {
       localStorage.removeItem(key);
-      return;
+    } catch (error) {
+      console.error('Error removing item from localStorage:', error);
     }
-    return AsyncStorage.removeItem(key);
-  },
-
-  async clear(): Promise<void> {
-    if (Platform.OS === 'web') {
-      localStorage.clear();
-      return;
-    }
-    return AsyncStorage.clear();
   },
 };
+
+// Mobile storage implementation
+const mobileStorage: Storage = {
+  getItem: AsyncStorage.getItem,
+  setItem: AsyncStorage.setItem,
+  removeItem: AsyncStorage.removeItem,
+};
+
+// Export the appropriate storage based on platform
+const storage = Platform.select({
+  web: webStorage,
+  default: mobileStorage,
+});
 
 export default storage;

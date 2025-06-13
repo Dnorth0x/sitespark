@@ -16,6 +16,7 @@ const CORRECT_PASSWORD = "Spark2025!";
 const DEFAULT_NICHE_TITLE = "Best Laptops of 2025";
 const DEFAULT_PRIMARY_COLOR = "#4f46e5";
 const DEFAULT_SECONDARY_COLOR = "#10b981";
+const DEFAULT_INCLUDE_BRANDING = true;
 const DEFAULT_TOP_PICKS: Product[] = [
   {
     id: 1,
@@ -95,6 +96,7 @@ export default function SiteSparkApp() {
   const [topPicks, setTopPicks] = useState<Product[]>(DEFAULT_TOP_PICKS);
   const [primaryColor, setPrimaryColor] = useState<string>(DEFAULT_PRIMARY_COLOR);
   const [secondaryColor, setSecondaryColor] = useState<string>(DEFAULT_SECONDARY_COLOR);
+  const [includeBranding, setIncludeBranding] = useState<boolean>(DEFAULT_INCLUDE_BRANDING);
   const [generatedHtml, setGeneratedHtml] = useState<string>("");
   const [saveStatus, setSaveStatus] = useState<string>("idle");
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -153,6 +155,12 @@ export default function SiteSparkApp() {
           setSecondaryColor(savedSecondaryColor);
         }
         
+        // Load branding preference
+        const savedIncludeBranding = await storage.getItem(STORAGE_KEYS.INCLUDE_BRANDING);
+        if (savedIncludeBranding !== null) {
+          setIncludeBranding(JSON.parse(savedIncludeBranding));
+        }
+        
         // Load selected template
         const savedTemplate = await storage.getItem(STORAGE_KEYS.SELECTED_TEMPLATE);
         if (savedTemplate) {
@@ -189,6 +197,9 @@ export default function SiteSparkApp() {
         // Save secondary color
         await storage.setItem(STORAGE_KEYS.SECONDARY_COLOR, secondaryColor);
         
+        // Save branding preference
+        await storage.setItem(STORAGE_KEYS.INCLUDE_BRANDING, JSON.stringify(includeBranding));
+        
         // Save selected template
         await storage.setItem(STORAGE_KEYS.SELECTED_TEMPLATE, selectedTemplate);
         
@@ -213,7 +224,7 @@ export default function SiteSparkApp() {
     };
     
     saveData();
-  }, [nicheTitle, topPicks, primaryColor, secondaryColor, selectedTemplate, isLoading, isAuthenticated]);
+  }, [nicheTitle, topPicks, primaryColor, secondaryColor, includeBranding, selectedTemplate, isLoading, isAuthenticated]);
 
   // Handle password submission
   const handlePasswordSubmit = async () => {
@@ -244,7 +255,7 @@ export default function SiteSparkApp() {
   const handleGenerateHtml = async () => {
     try {
       setIsGenerating(true);
-      const html = await generateHtml(nicheTitle, topPicks, selectedTemplate, primaryColor, secondaryColor);
+      const html = await generateHtml(nicheTitle, topPicks, selectedTemplate, primaryColor, secondaryColor, includeBranding);
       setGeneratedHtml(html);
       
       // On mobile, automatically switch to preview after generating
@@ -288,6 +299,7 @@ export default function SiteSparkApp() {
     setTopPicks(DEFAULT_TOP_PICKS);
     setPrimaryColor(DEFAULT_PRIMARY_COLOR);
     setSecondaryColor(DEFAULT_SECONDARY_COLOR);
+    setIncludeBranding(DEFAULT_INCLUDE_BRANDING);
     setSelectedTemplate("classic");
     setGeneratedHtml("");
     
@@ -322,6 +334,7 @@ export default function SiteSparkApp() {
       await storage.removeItem(STORAGE_KEYS.TOP_PICKS);
       await storage.removeItem(STORAGE_KEYS.PRIMARY_COLOR);
       await storage.removeItem(STORAGE_KEYS.SECONDARY_COLOR);
+      await storage.removeItem(STORAGE_KEYS.INCLUDE_BRANDING);
       await storage.removeItem(STORAGE_KEYS.SELECTED_TEMPLATE);
       
       // Reset state to defaults
@@ -329,6 +342,7 @@ export default function SiteSparkApp() {
       setTopPicks(DEFAULT_TOP_PICKS);
       setPrimaryColor(DEFAULT_PRIMARY_COLOR);
       setSecondaryColor(DEFAULT_SECONDARY_COLOR);
+      setIncludeBranding(DEFAULT_INCLUDE_BRANDING);
       setSelectedTemplate("classic");
       setGeneratedHtml("");
       
@@ -351,7 +365,8 @@ export default function SiteSparkApp() {
     return nicheTitle === DEFAULT_NICHE_TITLE && 
            JSON.stringify(topPicks) === JSON.stringify(DEFAULT_TOP_PICKS) &&
            primaryColor === DEFAULT_PRIMARY_COLOR &&
-           secondaryColor === DEFAULT_SECONDARY_COLOR;
+           secondaryColor === DEFAULT_SECONDARY_COLOR &&
+           includeBranding === DEFAULT_INCLUDE_BRANDING;
   };
 
   // Mobile Navigation Component
@@ -500,6 +515,8 @@ export default function SiteSparkApp() {
                   setPrimaryColor={setPrimaryColor}
                   secondaryColor={secondaryColor}
                   setSecondaryColor={setSecondaryColor}
+                  includeBranding={includeBranding}
+                  setIncludeBranding={setIncludeBranding}
                   isLoading={isLoading}
                 />
                 <Actions
@@ -538,6 +555,8 @@ export default function SiteSparkApp() {
                     setPrimaryColor={setPrimaryColor}
                     secondaryColor={secondaryColor}
                     setSecondaryColor={setSecondaryColor}
+                    includeBranding={includeBranding}
+                    setIncludeBranding={setIncludeBranding}
                     isLoading={isLoading}
                   />
                   <Actions

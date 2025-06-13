@@ -1,11 +1,12 @@
 import { Product } from "@/types";
-import { generateHtmlHead, generateHeroSection } from "@/utils/htmlGenerator";
+import { generateHtmlHead, generateHeroSection, generateBrandingFooter } from "@/utils/htmlGenerator";
 
 export default function generateTableTemplate(
   nicheTitle: string, 
   products: Product[], 
   primaryColor: string, 
-  secondaryColor: string
+  secondaryColor: string,
+  includeBranding: boolean = true
 ): string {
   const templateStyles = `
     .comparison-table {
@@ -84,8 +85,9 @@ export default function generateTableTemplate(
     }
   `;
 
-  const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles);
+  const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles, products);
   const heroSection = generateHeroSection(nicheTitle);
+  const brandingFooter = generateBrandingFooter(includeBranding);
 
   const tableRowsHtml = products.map(product => {
     const prosListItems = product.pros.slice(0, 3).map(pro => `<li>${pro}</li>`).join("");
@@ -135,6 +137,7 @@ export default function generateTableTemplate(
       </tbody>
     </table>
   </div>
+  ${brandingFooter}
 </body>
 </html>`;
 }

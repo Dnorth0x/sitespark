@@ -2,7 +2,7 @@ import { Product } from "@/types";
 
 // Template interface that all template modules should implement
 export interface TemplateModule {
-  default: (nicheTitle: string, products: Product[], primaryColor: string, secondaryColor: string) => string;
+  default: (nicheTitle: string, products: Product[], primaryColor: string, secondaryColor: string, includeBranding?: boolean) => string;
 }
 
 // Main generator function that dynamically dispatches to appropriate template
@@ -11,7 +11,8 @@ export const generateHtml = async (
   products: Product[], 
   template: string = "classic", 
   primaryColor: string = "#4f46e5", 
-  secondaryColor: string = "#10b981"
+  secondaryColor: string = "#10b981",
+  includeBranding: boolean = true
 ): Promise<string> => {
   try {
     // Dynamic import based on template selection
@@ -34,12 +35,12 @@ export const generateHtml = async (
     }
     
     // Call the template's default export function
-    return templateModule.default(nicheTitle, products, primaryColor, secondaryColor);
+    return templateModule.default(nicheTitle, products, primaryColor, secondaryColor, includeBranding);
   } catch (error) {
     console.error(`Error loading template "${template}":`, error);
     
     // Fallback to inline classic template if dynamic import fails
-    return generateFallbackClassicTemplate(nicheTitle, products, primaryColor, secondaryColor);
+    return generateFallbackClassicTemplate(nicheTitle, products, primaryColor, secondaryColor, includeBranding);
   }
 };
 
@@ -49,10 +50,11 @@ export const generateHtmlSync = (
   products: Product[], 
   template: string = "classic", 
   primaryColor: string = "#4f46e5", 
-  secondaryColor: string = "#10b981"
+  secondaryColor: string = "#10b981",
+  includeBranding: boolean = true
 ): string => {
   console.warn("generateHtmlSync is deprecated. Use generateHtml (async) instead.");
-  return generateFallbackClassicTemplate(nicheTitle, products, primaryColor, secondaryColor);
+  return generateFallbackClassicTemplate(nicheTitle, products, primaryColor, secondaryColor, includeBranding);
 };
 
 // Helper function to adjust color brightness
@@ -75,12 +77,44 @@ export const adjustColorBrightness = (hex: string, percent: number): string => {
   return `#${((newR << 16) | (newG << 8) | newB).toString(16).padStart(6, '0')}`;
 };
 
+// Generate Open Graph meta tags
+export const generateOpenGraphTags = (nicheTitle: string, products: Product[]): string => {
+  const description = `Discover the best ${nicheTitle.toLowerCase()} with our expert reviews and comparisons. Find the perfect product for your needs.`;
+  const imageUrl = products.length > 0 ? products[0].imageUrl : "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80";
+  
+  return `
+    <meta property="og:title" content="${nicheTitle}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:image" content="${imageUrl}" />
+    <meta property="og:url" content="${typeof window !== 'undefined' ? window.location.href : 'https://sitespark.com'}" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${nicheTitle}" />
+    <meta name="twitter:description" content="${description}" />
+    <meta name="twitter:image" content="${imageUrl}" />
+  `;
+};
+
+// Generate branding footer
+export const generateBrandingFooter = (includeBranding: boolean): string => {
+  if (!includeBranding) return "";
+  
+  return `
+    <footer style="margin-top: 40px; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb; background-color: #f9fafb;">
+      <p style="margin: 0; font-size: 14px; color: #6b7280;">
+        Powered by <a href="https://sitespark.com" target="_blank" rel="noopener noreferrer" style="color: #4f46e5; text-decoration: none; font-weight: 500;">SiteSpark</a>
+      </p>
+    </footer>
+  `;
+};
+
 // Generate common HTML head that all templates can use
 export const generateHtmlHead = (
   nicheTitle: string, 
   primaryColor: string, 
   secondaryColor: string,
-  additionalStyles: string = ""
+  additionalStyles: string = "",
+  products: Product[] = []
 ): string => {
   const commonStyles = `
     :root {
@@ -94,6 +128,7 @@ export const generateHtmlHead = (
       margin: 0; 
       background-color: #f9fafb; 
       color: #111827; 
+      line-height: 1.6;
     }
     .container { 
       max-width: 900px; 
@@ -150,12 +185,16 @@ export const generateHtmlHead = (
     }
   `;
 
+  const openGraphTags = generateOpenGraphTags(nicheTitle, products);
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${nicheTitle}</title>
+  <meta name="description" content="Discover the best ${nicheTitle.toLowerCase()} with our expert reviews and comparisons. Find the perfect product for your needs." />
+  ${openGraphTags}
   <style>
     ${commonStyles}
     ${additionalStyles}
@@ -175,7 +214,8 @@ const generateFallbackClassicTemplate = (
   nicheTitle: string, 
   products: Product[], 
   primaryColor: string, 
-  secondaryColor: string
+  secondaryColor: string,
+  includeBranding: boolean = true
 ): string => {
   const templateStyles = `
     .product-card { 
@@ -221,8 +261,9 @@ const generateFallbackClassicTemplate = (
     }
   `;
 
-  const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles);
+  const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles, products);
   const heroSection = generateHeroSection(nicheTitle);
+  const brandingFooter = generateBrandingFooter(includeBranding);
 
   const productCardsHtml = products.map(product => {
     const prosListItems = product.pros.map(pro => `<li>${pro}</li>`).join("");
@@ -258,6 +299,7 @@ const generateFallbackClassicTemplate = (
   <div class="container">
     ${heroSection}${productCardsHtml}
   </div>
+  ${brandingFooter}
 </body>
 </html>`;
 };
