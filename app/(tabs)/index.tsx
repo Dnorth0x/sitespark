@@ -38,12 +38,16 @@ const CORRECT_PASSWORD = "Spark2025!";
 
 export default function SiteSparkApp() {
   const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const isWideScreen = width > 1024;
 
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [passwordInput, setPasswordInput] = useState<string>("");
   const [passwordError, setPasswordError] = useState<string>("");
+
+  // Mobile navigation state
+  const [activeMobileView, setActiveMobileView] = useState<'form' | 'preview'>('form');
 
   // App state
   const [nicheTitle, setNicheTitle] = useState<string>(DEFAULT_NICHE_TITLE);
@@ -192,6 +196,11 @@ export default function SiteSparkApp() {
   const handleGenerateHtml = () => {
     const html = generateHtml(nicheTitle, topPicks, selectedTemplate, primaryColor, secondaryColor);
     setGeneratedHtml(html);
+    
+    // On mobile, automatically switch to preview after generating
+    if (isMobile) {
+      setActiveMobileView('preview');
+    }
   };
 
   // Clear all data function
@@ -241,6 +250,44 @@ export default function SiteSparkApp() {
       }, 2000);
     }
   };
+
+  // Mobile Navigation Component
+  const MobileNavigation = () => (
+    <View style={styles.mobileNavigation}>
+      <TouchableOpacity
+        style={[
+          styles.mobileNavButton,
+          activeMobileView === 'form' && styles.mobileNavButtonActive
+        ]}
+        onPress={() => setActiveMobileView('form')}
+      >
+        <Text style={[
+          styles.mobileNavButtonText,
+          activeMobileView === 'form' && styles.mobileNavButtonTextActive
+        ]}>
+          Form
+        </Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={[
+          styles.mobileNavButton,
+          activeMobileView === 'preview' && styles.mobileNavButtonActive
+        ]}
+        onPress={() => setActiveMobileView('preview')}
+      >
+        <Text style={[
+          styles.mobileNavButtonText,
+          activeMobileView === 'preview' && styles.mobileNavButtonTextActive
+        ]}>
+          Preview
+        </Text>
+        {generatedHtml && (
+          <View style={styles.previewIndicator} />
+        )}
+      </TouchableOpacity>
+    </View>
+  );
 
   // Show password screen if not authenticated
   if (!isAuthenticated) {
@@ -313,41 +360,80 @@ export default function SiteSparkApp() {
       />
       
       <View style={styles.container}>
+        {/* Mobile Navigation */}
+        {isMobile && <MobileNavigation />}
+        
         <View style={[
           styles.content,
-          isWideScreen ? styles.rowLayout : styles.columnLayout
+          isMobile ? styles.mobileContent : (isWideScreen ? styles.rowLayout : styles.columnLayout)
         ]}>
-          <View style={[
-            styles.inputSection,
-            isWideScreen ? { width: "60%" } : { width: "100%" }
-          ]}>
-            <InputPanel
-              nicheTitle={nicheTitle}
-              setNicheTitle={setNicheTitle}
-              topPicks={topPicks}
-              setTopPicks={setTopPicks}
-              primaryColor={primaryColor}
-              setPrimaryColor={setPrimaryColor}
-              secondaryColor={secondaryColor}
-              setSecondaryColor={setSecondaryColor}
-              isLoading={isLoading}
-            />
-            <Actions
-              onGenerateHtml={handleGenerateHtml}
-              generatedHtml={generatedHtml}
-              saveStatus={saveStatus}
-              onClearData={handleClearData}
-              selectedTemplate={selectedTemplate}
-              setSelectedTemplate={setSelectedTemplate}
-            />
-          </View>
+          {/* Desktop Layout - Both panels visible */}
+          {!isMobile && (
+            <>
+              <View style={[
+                styles.inputSection,
+                isWideScreen ? { width: "60%" } : { width: "100%" }
+              ]}>
+                <InputPanel
+                  nicheTitle={nicheTitle}
+                  setNicheTitle={setNicheTitle}
+                  topPicks={topPicks}
+                  setTopPicks={setTopPicks}
+                  primaryColor={primaryColor}
+                  setPrimaryColor={setPrimaryColor}
+                  secondaryColor={secondaryColor}
+                  setSecondaryColor={setSecondaryColor}
+                  isLoading={isLoading}
+                />
+                <Actions
+                  onGenerateHtml={handleGenerateHtml}
+                  generatedHtml={generatedHtml}
+                  saveStatus={saveStatus}
+                  onClearData={handleClearData}
+                  selectedTemplate={selectedTemplate}
+                  setSelectedTemplate={setSelectedTemplate}
+                />
+              </View>
+              
+              <View style={[
+                styles.previewSection,
+                isWideScreen ? { width: "40%" } : { width: "100%" }
+              ]}>
+                <PreviewPanel generatedHtml={generatedHtml} />
+              </View>
+            </>
+          )}
           
-          <View style={[
-            styles.previewSection,
-            isWideScreen ? { width: "40%" } : { width: "100%" }
-          ]}>
-            <PreviewPanel generatedHtml={generatedHtml} />
-          </View>
+          {/* Mobile Layout - Single panel based on active view */}
+          {isMobile && (
+            <View style={styles.mobilePanel}>
+              {activeMobileView === 'form' ? (
+                <View style={styles.mobileFormContainer}>
+                  <InputPanel
+                    nicheTitle={nicheTitle}
+                    setNicheTitle={setNicheTitle}
+                    topPicks={topPicks}
+                    setTopPicks={setTopPicks}
+                    primaryColor={primaryColor}
+                    setPrimaryColor={setPrimaryColor}
+                    secondaryColor={secondaryColor}
+                    setSecondaryColor={setSecondaryColor}
+                    isLoading={isLoading}
+                  />
+                  <Actions
+                    onGenerateHtml={handleGenerateHtml}
+                    generatedHtml={generatedHtml}
+                    saveStatus={saveStatus}
+                    onClearData={handleClearData}
+                    selectedTemplate={selectedTemplate}
+                    setSelectedTemplate={setSelectedTemplate}
+                  />
+                </View>
+              ) : (
+                <PreviewPanel generatedHtml={generatedHtml} />
+              )}
+            </View>
+          )}
         </View>
       </View>
     </>
@@ -362,16 +448,20 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
     overflow: "hidden",
+  },
+  mobileContent: {
+    flex: 1,
   },
   rowLayout: {
     flexDirection: "row",
     gap: 20,
+    padding: 16,
   },
   columnLayout: {
     flexDirection: "column",
     gap: 20,
+    padding: 16,
   },
   inputSection: {
     flex: 1,
@@ -394,6 +484,51 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  mobileNavigation: {
+    flexDirection: "row",
+    backgroundColor: Colors.light.card,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  mobileNavButton: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    position: "relative",
+  },
+  mobileNavButtonActive: {
+    backgroundColor: Colors.light.primary,
+  },
+  mobileNavButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.light.text,
+  },
+  mobileNavButtonTextActive: {
+    color: "#ffffff",
+  },
+  previewIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.light.success,
+    marginLeft: 8,
+  },
+  mobilePanel: {
+    flex: 1,
+    backgroundColor: Colors.light.card,
+  },
+  mobileFormContainer: {
+    flex: 1,
   },
   loginContainer: {
     flex: 1,

@@ -13,5 +13,8 @@ export default {
     secondary: "#8b5cf6",
     success: "#10b981",
     error: "#ef4444",
+    mobileNavActive: "#4f46e5",
+    mobileNavInactive: "#6b7280",
+    previewIndicator: "#10b981",
   },
 };

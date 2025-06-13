@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView, useWindowDimensions } from "react-native";
 import * as Haptics from "expo-haptics";
 import { AlertCircle, ChevronDown, Copy } from "lucide-react-native";
 import Colors from "@/constants/colors";
@@ -22,6 +22,9 @@ export default function Actions({
   selectedTemplate,
   setSelectedTemplate
 }: ActionsProps) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+
   const copyToClipboard = async () => {
     try {
       if (Platform.OS !== "web") {
@@ -54,7 +57,7 @@ export default function Actions({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isMobile && styles.mobileContainer]}>
       <View style={styles.templateSelector}>
         <Text style={styles.templateLabel}>Select Template:</Text>
         <View style={styles.pickerContainer}>
@@ -93,17 +96,20 @@ export default function Actions({
         </View>
       </View>
       
-      <View style={styles.actionsRow}>
+      <View style={[styles.actionsRow, isMobile && styles.mobileActionsRow]}>
         <TouchableOpacity 
-          style={styles.generateButton} 
+          style={[styles.generateButton, isMobile && styles.mobileGenerateButton]} 
           onPress={onGenerateHtml}
         >
-          <Text style={styles.generateButtonText}>Generate Site HTML</Text>
+          <Text style={styles.generateButtonText}>
+            {isMobile ? "Generate & Preview" : "Generate Site HTML"}
+          </Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
           style={[
             styles.copyButton, 
+            isMobile && styles.mobileCopyButton,
             !generatedHtml ? styles.disabledButton : null
           ]} 
           onPress={copyToClipboard}
@@ -119,7 +125,7 @@ export default function Actions({
         </TouchableOpacity>
       </View>
       
-      <View style={styles.statusRow}>
+      <View style={[styles.statusRow, isMobile && styles.mobileStatusRow]}>
         {saveStatus !== "idle" && (
           <View style={styles.saveStatusContainer}>
             <Text style={[
@@ -135,7 +141,7 @@ export default function Actions({
         )}
         
         <TouchableOpacity 
-          style={styles.clearButton} 
+          style={[styles.clearButton, isMobile && styles.mobileClearButton]} 
           onPress={onClearData}
         >
           <AlertCircle size={16} color="#ef4444" style={styles.clearIcon} />
@@ -151,6 +157,12 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     gap: 16,
     paddingHorizontal: 16,
+  },
+  mobileContainer: {
+    marginVertical: 16,
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
   templateSelector: {
     marginBottom: 8,
@@ -188,11 +200,20 @@ const styles = StyleSheet.create({
     gap: 12,
     flexWrap: "wrap",
   },
+  mobileActionsRow: {
+    flexDirection: "column",
+    gap: 12,
+  },
   statusRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 8,
+  },
+  mobileStatusRow: {
+    flexDirection: "column",
+    gap: 12,
+    alignItems: "stretch",
   },
   generateButton: {
     backgroundColor: "#4f46e5",
@@ -202,6 +223,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     minWidth: 150,
+  },
+  mobileGenerateButton: {
+    flex: 0,
+    minWidth: 0,
+    width: "100%",
+    paddingVertical: 16,
   },
   generateButtonText: {
     color: "#ffffff",
@@ -221,6 +248,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 8,
+  },
+  mobileCopyButton: {
+    flex: 0,
+    minWidth: 0,
+    width: "100%",
+    paddingVertical: 16,
   },
   copyIcon: {
     marginRight: 4,
@@ -263,6 +296,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 6,
     backgroundColor: "#fee2e2",
+    justifyContent: "center",
+  },
+  mobileClearButton: {
+    paddingVertical: 12,
+    width: "100%",
   },
   clearIcon: {
     marginRight: 6,
