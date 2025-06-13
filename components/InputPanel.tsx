@@ -16,6 +16,12 @@ interface InputPanelProps {
   isLoading?: boolean;
 }
 
+// Helper function to ensure specifications array exists
+const ensureSpecifications = (product: Product): Product => ({
+  ...product,
+  specifications: Array.isArray(product.specifications) ? product.specifications : []
+});
+
 export default function InputPanel({ 
   nicheTitle, 
   setNicheTitle, 
@@ -30,6 +36,9 @@ export default function InputPanel({
   
   const handleProductChange = (index: number, field: keyof Product, value: string | string[] | Specification[]) => {
     const updatedProducts = [...topPicks];
+    
+    // Ensure the product has specifications before any operation
+    updatedProducts[index] = ensureSpecifications(updatedProducts[index]);
     
     // Handle pros and cons arrays (comma-separated strings)
     if (field === 'pros' || field === 'cons') {
@@ -79,27 +88,26 @@ export default function InputPanel({
     };
     
     const updatedProducts = [...topPicks];
-    // Ensure specifications array exists before adding to it
-    if (!updatedProducts[productIndex].specifications) {
-      updatedProducts[productIndex].specifications = [];
-    }
-    updatedProducts[productIndex].specifications = [...updatedProducts[productIndex].specifications, newSpec];
+    // CRITICAL: Ensure specifications array exists before adding to it
+    updatedProducts[productIndex] = ensureSpecifications(updatedProducts[productIndex]);
+    updatedProducts[productIndex].specifications.push(newSpec);
     setTopPicks(updatedProducts);
   };
 
   const removeSpecification = (productIndex: number, specIndex: number) => {
     const updatedProducts = [...topPicks];
-    // Ensure specifications array exists before filtering
-    if (updatedProducts[productIndex].specifications) {
-      updatedProducts[productIndex].specifications = updatedProducts[productIndex].specifications.filter((_, i) => i !== specIndex);
-      setTopPicks(updatedProducts);
-    }
+    // CRITICAL: Ensure specifications array exists before filtering
+    updatedProducts[productIndex] = ensureSpecifications(updatedProducts[productIndex]);
+    updatedProducts[productIndex].specifications = updatedProducts[productIndex].specifications.filter((_, i) => i !== specIndex);
+    setTopPicks(updatedProducts);
   };
 
   const handleSpecificationChange = (productIndex: number, specIndex: number, field: 'key' | 'value', value: string) => {
     const updatedProducts = [...topPicks];
-    // Ensure specifications array exists before updating
-    if (updatedProducts[productIndex].specifications && updatedProducts[productIndex].specifications[specIndex]) {
+    // CRITICAL: Ensure specifications array exists before updating
+    updatedProducts[productIndex] = ensureSpecifications(updatedProducts[productIndex]);
+    
+    if (updatedProducts[productIndex].specifications[specIndex]) {
       updatedProducts[productIndex].specifications[specIndex][field] = value;
       setTopPicks(updatedProducts);
     }
@@ -208,122 +216,127 @@ export default function InputPanel({
           </TouchableOpacity>
         </View>
         
-        {topPicks.map((product, index) => (
-          <View key={product.id} style={styles.productCard}>
-            <View style={styles.productCardHeader}>
-              <Text style={styles.productCardTitle}>Product {index + 1}</Text>
-              {topPicks.length > 1 && (
-                <TouchableOpacity 
-                  style={styles.removeButton} 
-                  onPress={() => removeProduct(index)}
-                >
-                  <X size={16} color="#ef4444" />
-                </TouchableOpacity>
-              )}
-            </View>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Name</Text>
-              <TextInput
-                style={styles.input}
-                value={product.name}
-                onChangeText={(value) => handleProductChange(index, 'name', value)}
-                placeholder="Product name"
-              />
-            </View>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Image URL</Text>
-              <TextInput
-                style={styles.input}
-                value={product.imageUrl}
-                onChangeText={(value) => handleProductChange(index, 'imageUrl', value)}
-                placeholder="https://example.com/image.jpg"
-              />
-            </View>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Tagline</Text>
-              <TextInput
-                style={styles.input}
-                value={product.tagline}
-                onChangeText={(value) => handleProductChange(index, 'tagline', value)}
-                placeholder="Short description of the product"
-              />
-            </View>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Pros (comma-separated)</Text>
-              <TextInput
-                style={styles.input}
-                value={product.pros.join(', ')}
-                onChangeText={(value) => handleProductChange(index, 'pros', value)}
-                placeholder="Great battery, Fast processor, Beautiful design"
-              />
-            </View>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Cons (comma-separated)</Text>
-              <TextInput
-                style={styles.input}
-                value={product.cons.join(', ')}
-                onChangeText={(value) => handleProductChange(index, 'cons', value)}
-                placeholder="Expensive, Heavy, Limited ports"
-              />
-            </View>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Affiliate Link</Text>
-              <TextInput
-                style={styles.input}
-                value={product.affiliateLink}
-                onChangeText={(value) => handleProductChange(index, 'affiliateLink', value)}
-                placeholder="https://amazon.com/product"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <View style={styles.specificationHeader}>
-                <Text style={styles.label}>Specifications</Text>
-                <TouchableOpacity 
-                  style={styles.addSpecButton} 
-                  onPress={() => addSpecification(index)}
-                >
-                  <Plus size={14} color="#ffffff" />
-                  <Text style={styles.addSpecButtonText}>Add Spec</Text>
-                </TouchableOpacity>
+        {topPicks.map((product, index) => {
+          // CRITICAL: Ensure product has specifications before rendering
+          const safeProduct = ensureSpecifications(product);
+          
+          return (
+            <View key={safeProduct.id} style={styles.productCard}>
+              <View style={styles.productCardHeader}>
+                <Text style={styles.productCardTitle}>Product {index + 1}</Text>
+                {topPicks.length > 1 && (
+                  <TouchableOpacity 
+                    style={styles.removeButton} 
+                    onPress={() => removeProduct(index)}
+                  >
+                    <X size={16} color="#ef4444" />
+                  </TouchableOpacity>
+                )}
               </View>
               
-              {/* DEFENSIVE PROGRAMMING: Ensure specifications exists and is an array */}
-              {(product.specifications || []).map((spec, specIndex) => (
-                <View key={spec.id} style={styles.specificationRow}>
-                  <TextInput
-                    style={[styles.input, styles.specKeyInput]}
-                    value={spec.key}
-                    onChangeText={(value) => handleSpecificationChange(index, specIndex, 'key', value)}
-                    placeholder="Key (e.g., Processor)"
-                  />
-                  <TextInput
-                    style={[styles.input, styles.specValueInput]}
-                    value={spec.value}
-                    onChangeText={(value) => handleSpecificationChange(index, specIndex, 'value', value)}
-                    placeholder="Value (e.g., Intel i7)"
-                  />
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={safeProduct.name}
+                  onChangeText={(value) => handleProductChange(index, 'name', value)}
+                  placeholder="Product name"
+                />
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Image URL</Text>
+                <TextInput
+                  style={styles.input}
+                  value={safeProduct.imageUrl}
+                  onChangeText={(value) => handleProductChange(index, 'imageUrl', value)}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Tagline</Text>
+                <TextInput
+                  style={styles.input}
+                  value={safeProduct.tagline}
+                  onChangeText={(value) => handleProductChange(index, 'tagline', value)}
+                  placeholder="Short description of the product"
+                />
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Pros (comma-separated)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={safeProduct.pros.join(', ')}
+                  onChangeText={(value) => handleProductChange(index, 'pros', value)}
+                  placeholder="Great battery, Fast processor, Beautiful design"
+                />
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Cons (comma-separated)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={safeProduct.cons.join(', ')}
+                  onChangeText={(value) => handleProductChange(index, 'cons', value)}
+                  placeholder="Expensive, Heavy, Limited ports"
+                />
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Affiliate Link</Text>
+                <TextInput
+                  style={styles.input}
+                  value={safeProduct.affiliateLink}
+                  onChangeText={(value) => handleProductChange(index, 'affiliateLink', value)}
+                  placeholder="https://amazon.com/product"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <View style={styles.specificationHeader}>
+                  <Text style={styles.label}>Specifications</Text>
                   <TouchableOpacity 
-                    style={styles.removeSpecButton} 
-                    onPress={() => removeSpecification(index, specIndex)}
+                    style={styles.addSpecButton} 
+                    onPress={() => addSpecification(index)}
                   >
-                    <X size={14} color="#ef4444" />
+                    <Plus size={14} color="#ffffff" />
+                    <Text style={styles.addSpecButtonText}>Add Spec</Text>
                   </TouchableOpacity>
                 </View>
-              ))}
-              
-              {(!product.specifications || product.specifications.length === 0) && (
-                <Text style={styles.noSpecsText}>No specifications added yet. Click "Add Spec" to get started.</Text>
-              )}
+                
+                {/* CRITICAL: Use safeProduct.specifications which is guaranteed to be an array */}
+                {safeProduct.specifications.map((spec, specIndex) => (
+                  <View key={spec.id} style={styles.specificationRow}>
+                    <TextInput
+                      style={[styles.input, styles.specKeyInput]}
+                      value={spec.key}
+                      onChangeText={(value) => handleSpecificationChange(index, specIndex, 'key', value)}
+                      placeholder="Key (e.g., Processor)"
+                    />
+                    <TextInput
+                      style={[styles.input, styles.specValueInput]}
+                      value={spec.value}
+                      onChangeText={(value) => handleSpecificationChange(index, specIndex, 'value', value)}
+                      placeholder="Value (e.g., Intel i7)"
+                    />
+                    <TouchableOpacity 
+                      style={styles.removeSpecButton} 
+                      onPress={() => removeSpecification(index, specIndex)}
+                    >
+                      <X size={14} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                
+                {safeProduct.specifications.length === 0 && (
+                  <Text style={styles.noSpecsText}>No specifications added yet. Click "Add Spec" to get started.</Text>
+                )}
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </View>
     </ScrollView>
   );

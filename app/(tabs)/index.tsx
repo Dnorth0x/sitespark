@@ -70,6 +70,12 @@ const DEFAULT_TOP_PICKS: Product[] = [
 // Password for accessing the app
 const CORRECT_PASSWORD = "Spark2025!";
 
+// Helper function to ensure product has specifications array
+const ensureProductSpecifications = (product: any): Product => ({
+  ...product,
+  specifications: Array.isArray(product.specifications) ? product.specifications : []
+});
+
 export default function SiteSparkApp() {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
@@ -125,15 +131,12 @@ export default function SiteSparkApp() {
           setNicheTitle(savedNicheTitle);
         }
         
-        // Load top picks
+        // Load top picks with defensive specifications handling
         const savedTopPicks = await storage.getItem(STORAGE_KEYS.TOP_PICKS);
         if (savedTopPicks) {
           const parsedTopPicks = JSON.parse(savedTopPicks);
-          // Ensure specifications exist for backward compatibility
-          const updatedTopPicks = parsedTopPicks.map((product: any) => ({
-            ...product,
-            specifications: product.specifications || []
-          }));
+          // CRITICAL: Ensure specifications exist for all products
+          const updatedTopPicks = parsedTopPicks.map(ensureProductSpecifications);
           setTopPicks(updatedTopPicks);
         }
         
@@ -504,7 +507,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   mobileContent: {
-    minHeight: "100%",
+    flex: 1,
     width: "100%",
   },
   rowLayout: {
@@ -578,13 +581,11 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   mobilePanel: {
-    width: "100%",
+    flex: 1,
     backgroundColor: Colors.light.card,
-    height: "auto",
   },
   mobileFormContainer: {
-    width: "100%",
-    height: "auto",
+    flex: 1,
   },
   loginContainer: {
     flex: 1,

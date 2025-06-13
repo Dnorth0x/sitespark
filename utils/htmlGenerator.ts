@@ -19,17 +19,17 @@ export const generateHtml = async (
     
     switch (template) {
       case "table":
-        templateModule = await import("@/templates/table");
+        templateModule = await import("../templates/table");
         break;
       case "grid":
-        templateModule = await import("@/templates/grid");
+        templateModule = await import("../templates/grid");
         break;
       case "analyst":
-        templateModule = await import("@/templates/analyst");
+        templateModule = await import("../templates/analyst");
         break;
       case "classic":
       default:
-        templateModule = await import("@/templates/classic");
+        templateModule = await import("../templates/classic");
         break;
     }
     
