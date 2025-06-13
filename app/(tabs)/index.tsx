@@ -9,7 +9,7 @@ import { generateHtml } from "@/utils/htmlGenerator";
 import Colors from "@/constants/colors";
 import storage, { STORAGE_KEYS } from "@/utils/storage";
 
-// Default data to use when no saved data exists
+// Default data to use when no saved data exists - THREE complete products
 const DEFAULT_NICHE_TITLE = "Best Laptops of 2025";
 const DEFAULT_PRIMARY_COLOR = "#4f46e5";
 const DEFAULT_SECONDARY_COLOR = "#10b981";
@@ -31,6 +31,40 @@ const DEFAULT_TOP_PICKS: Product[] = [
       { id: 6, key: "Weight", value: "3.5 lbs (1.6 kg)" }
     ]
   },
+  {
+    id: 2,
+    name: "Dell XPS 13 Plus",
+    imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1626&q=80",
+    tagline: "Sleek Windows ultrabook with cutting-edge design and performance",
+    pros: ["Stunning 4K display", "Premium build quality", "Fast Intel processor", "Compact and lightweight"],
+    cons: ["Limited port selection", "Average battery life", "Can get warm under load"],
+    affiliateLink: "https://amazon.com/dell-xps-13",
+    specifications: [
+      { id: 1, key: "Processor", value: "Intel Core i7-1360P" },
+      { id: 2, key: "Memory", value: "16GB LPDDR5" },
+      { id: 3, key: "Storage", value: "512GB PCIe SSD" },
+      { id: 4, key: "Display", value: "13.4-inch 4K OLED" },
+      { id: 5, key: "Battery Life", value: "Up to 12 hours" },
+      { id: 6, key: "Weight", value: "2.73 lbs (1.24 kg)" }
+    ]
+  },
+  {
+    id: 3,
+    name: "ASUS ROG Zephyrus G14",
+    imageUrl: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1626&q=80",
+    tagline: "Powerful gaming laptop that does not compromise on portability",
+    pros: ["Excellent gaming performance", "Great battery life for gaming laptop", "Compact 14-inch form factor", "High refresh rate display"],
+    cons: ["Can get loud under load", "Limited webcam quality", "Premium price point"],
+    affiliateLink: "https://amazon.com/asus-rog-zephyrus",
+    specifications: [
+      { id: 1, key: "Processor", value: "AMD Ryzen 9 7940HS" },
+      { id: 2, key: "Graphics", value: "NVIDIA RTX 4060" },
+      { id: 3, key: "Memory", value: "16GB DDR5" },
+      { id: 4, key: "Storage", value: "1TB PCIe SSD" },
+      { id: 5, key: "Display", value: "14-inch 165Hz QHD" },
+      { id: 6, key: "Weight", value: "3.64 lbs (1.65 kg)" }
+    ]
+  }
 ];
 
 // Password for accessing the app
@@ -449,14 +483,13 @@ const styles = StyleSheet.create({
   mobileContainer: {
     flex: 1,
     backgroundColor: Colors.light.background,
-    // Remove overflow hidden for mobile to allow natural scrolling
   },
   content: {
     flex: 1,
     overflow: "hidden",
   },
   mobileContent: {
-    // Remove flex: 1 to allow natural height growth
+    minHeight: "100%",
     width: "100%",
   },
   rowLayout: {
@@ -530,15 +563,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   mobilePanel: {
-    // Remove flex: 1 and allow natural height
     width: "100%",
     backgroundColor: Colors.light.card,
-    minHeight: "100%",
+    height: "auto",
   },
   mobileFormContainer: {
-    // Remove flex: 1 and allow natural height
     width: "100%",
-    minHeight: "100%",
+    height: "auto",
   },
   loginContainer: {
     flex: 1,
