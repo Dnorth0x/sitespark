@@ -1,119 +1,135 @@
 import React from "react";
-import { View, Text, TextInput, StyleSheet, ScrollView, Platform } from "react-native";
+import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { Product } from "@/types";
+import Colors from "@/constants/colors";
 
 interface InputPanelProps {
   nicheTitle: string;
   setNicheTitle: (title: string) => void;
   topPicks: Product[];
   setTopPicks: (products: Product[]) => void;
+  isLoading?: boolean;
 }
 
 export default function InputPanel({ 
   nicheTitle, 
   setNicheTitle, 
   topPicks, 
-  setTopPicks 
+  setTopPicks,
+  isLoading = false
 }: InputPanelProps) {
   
-  const updateProduct = (index: number, field: keyof Product, value: string) => {
+  const handleProductChange = (index: number, field: keyof Product, value: string | string[]) => {
     const updatedProducts = [...topPicks];
     
-    if (field === "pros" || field === "cons") {
-      // Split comma-separated string into array and trim whitespace
-      updatedProducts[index][field] = value
-        .split(",")
-        .map(item => item.trim())
-        .filter(item => item !== "");
+    // Handle pros and cons arrays (comma-separated strings)
+    if (field === 'pros' || field === 'cons') {
+      if (typeof value === 'string') {
+        // Split by comma and trim each item
+        updatedProducts[index][field] = value.split(',').map(item => item.trim()).filter(item => item !== '');
+      } else {
+        updatedProducts[index][field] = value;
+      }
     } else {
-      // @ts-ignore - TypeScript doesn't know that we're only updating string fields
+      // @ts-ignore - TypeScript doesn't know that value can be assigned to the field
       updatedProducts[index][field] = value;
     }
     
     setTopPicks(updatedProducts);
   };
 
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.light.primary} />
+        <Text style={styles.loadingText}>Loading your data...</Text>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Text style={styles.heading}>SiteSpark: Your Niche Site Generator</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <Text style={styles.mainHeading}>SiteSpark: Your Niche Site Generator</Text>
       
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Niche Title</Text>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Niche Title</Text>
         <TextInput
           style={styles.input}
           value={nicheTitle}
           onChangeText={setNicheTitle}
-          placeholder="e.g. Best Air Fryers of 2025"
+          placeholder="Enter your niche title (e.g., Best Laptops of 2025)"
         />
       </View>
       
-      <Text style={styles.sectionTitle}>Top 3 Products</Text>
-      
-      {topPicks.map((product, index) => (
-        <View key={product.id} style={styles.productCard}>
-          <Text style={styles.productNumber}>Product {index + 1}</Text>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Product Name</Text>
-            <TextInput
-              style={styles.input}
-              value={product.name}
-              onChangeText={(value) => updateProduct(index, "name", value)}
-              placeholder="Product Name"
-            />
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Top 3 Products</Text>
+        
+        {topPicks.map((product, index) => (
+          <View key={product.id} style={styles.productCard}>
+            <Text style={styles.productCardTitle}>Product {index + 1}</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Name</Text>
+              <TextInput
+                style={styles.input}
+                value={product.name}
+                onChangeText={(value) => handleProductChange(index, 'name', value)}
+                placeholder="Product name"
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Image URL</Text>
+              <TextInput
+                style={styles.input}
+                value={product.imageUrl}
+                onChangeText={(value) => handleProductChange(index, 'imageUrl', value)}
+                placeholder="https://example.com/image.jpg"
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Tagline</Text>
+              <TextInput
+                style={styles.input}
+                value={product.tagline}
+                onChangeText={(value) => handleProductChange(index, 'tagline', value)}
+                placeholder="Short description of the product"
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Pros (comma-separated)</Text>
+              <TextInput
+                style={styles.input}
+                value={product.pros.join(', ')}
+                onChangeText={(value) => handleProductChange(index, 'pros', value)}
+                placeholder="Great battery, Fast processor, Beautiful design"
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Cons (comma-separated)</Text>
+              <TextInput
+                style={styles.input}
+                value={product.cons.join(', ')}
+                onChangeText={(value) => handleProductChange(index, 'cons', value)}
+                placeholder="Expensive, Heavy, Limited ports"
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Affiliate Link</Text>
+              <TextInput
+                style={styles.input}
+                value={product.affiliateLink}
+                onChangeText={(value) => handleProductChange(index, 'affiliateLink', value)}
+                placeholder="https://amazon.com/product"
+              />
+            </View>
           </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Image URL</Text>
-            <TextInput
-              style={styles.input}
-              value={product.imageUrl}
-              onChangeText={(value) => updateProduct(index, "imageUrl", value)}
-              placeholder="https://example.com/image.jpg"
-            />
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Tagline</Text>
-            <TextInput
-              style={styles.input}
-              value={product.tagline}
-              onChangeText={(value) => updateProduct(index, "tagline", value)}
-              placeholder="Short description of the product"
-            />
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Pros (comma-separated)</Text>
-            <TextInput
-              style={styles.input}
-              value={product.pros.join(", ")}
-              onChangeText={(value) => updateProduct(index, "pros", value)}
-              placeholder="Easy to use, Affordable, Durable"
-            />
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Cons (comma-separated)</Text>
-            <TextInput
-              style={styles.input}
-              value={product.cons.join(", ")}
-              onChangeText={(value) => updateProduct(index, "cons", value)}
-              placeholder="Bulky, Noisy, Expensive"
-            />
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Affiliate Link</Text>
-            <TextInput
-              style={styles.input}
-              value={product.affiliateLink}
-              onChangeText={(value) => updateProduct(index, "affiliateLink", value)}
-              placeholder="https://amazon.com/product/ref=your-affiliate-id"
-            />
-          </View>
-        </View>
-      ))}
+        ))}
+      </View>
     </ScrollView>
   );
 }
@@ -121,39 +137,50 @@ export default function InputPanel({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  contentContainer: {
+    padding: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
-  heading: {
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: Colors.light.text,
+  },
+  mainHeading: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: "700",
     marginBottom: 20,
-    color: "#1f2937",
+    color: Colors.light.text,
+    textAlign: "center",
+  },
+  section: {
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 15,
-    color: "#374151",
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 12,
+    color: Colors.light.text,
   },
   productCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f9fafb",
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "#e5e7eb",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
-  productNumber: {
-    fontSize: 18,
-    fontWeight: "bold",
+  productCardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
     marginBottom: 12,
-    color: "#4f46e5",
+    color: Colors.light.text,
   },
   inputGroup: {
     marginBottom: 12,
@@ -161,15 +188,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     marginBottom: 6,
-    color: "#4b5563",
-    fontWeight: "500",
+    color: Colors.light.text,
   },
   input: {
+    backgroundColor: "#ffffff",
     borderWidth: 1,
     borderColor: "#d1d5db",
     borderRadius: 6,
-    padding: Platform.OS === "ios" ? 12 : 8,
-    fontSize: 16,
-    backgroundColor: "#f9fafb",
+    padding: 10,
+    fontSize: 14,
   },
 });
