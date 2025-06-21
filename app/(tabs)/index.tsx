@@ -4,7 +4,6 @@ import { Stack } from "expo-router";
 import { Product } from "@/types";
 import InputPanel from "@/components/InputPanel";
 import PreviewPanel from "@/components/PreviewPanel";
-import Actions from "@/components/Actions";
 import { generateHtml } from "@/utils/htmlGenerator";
 import Colors from "@/constants/colors";
 import storage, { STORAGE_KEYS } from "@/utils/storage";
@@ -617,9 +616,6 @@ export default function SiteSparkApp() {
                   onClearData={handleClearData}
                   isContentDefault={isContentDefault()}
                   onChangePassword={handleChangePassword}
-                />
-                
-                <Actions
                   onGenerateHtml={handleGenerateHtml}
                   generatedHtml={generatedHtml}
                   saveStatus={saveStatus}
@@ -662,9 +658,6 @@ export default function SiteSparkApp() {
                     onClearData={handleClearData}
                     isContentDefault={isContentDefault()}
                     onChangePassword={handleChangePassword}
-                  />
-                  
-                  <Actions
                     onGenerateHtml={handleGenerateHtml}
                     generatedHtml={generatedHtml}
                     saveStatus={saveStatus}
