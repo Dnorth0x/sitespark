@@ -61,13 +61,13 @@ const RefreshIcon = ({ size = 16, color = "#f59e0b" }) => (
 
 export default function SettingsPanel({
   pexelsApiKey,
-  setPexelsApiKey,
+  setPexelsApiKey = () => {},
   includeBranding,
-  setIncludeBranding,
-  onResetContent,
-  onClearData,
+  setIncludeBranding = () => {},
+  onResetContent = () => {},
+  onClearData = () => {},
   isContentDefault,
-  onChangePassword,
+  onChangePassword = () => {},
   isLoading = false
 }: SettingsPanelProps) {
   const [newPassword, setNewPassword] = useState("");
