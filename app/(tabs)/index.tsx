@@ -8,6 +8,7 @@ import Actions from "@/components/Actions";
 import { generateHtml } from "@/utils/htmlGenerator";
 import Colors from "@/constants/colors";
 import storage, { STORAGE_KEYS } from "@/utils/storage";
+import ImageSearchModal from "@/components/ImageSearchModal";
 
 // Password for accessing the app
 const CORRECT_PASSWORD = "Spark2025!";
@@ -674,33 +675,16 @@ export default function SiteSparkApp() {
           )}
         </View>
         
-        {/* Image Search Modal Placeholder */}
-        {/* Note: The actual ImageSearchModal component will be created by the user */}
-        <Modal
+        {/* Image Search Modal */}
+        <ImageSearchModal
           visible={isImageSearchModalVisible}
-          animationType="slide"
-          transparent={false}
-          onRequestClose={() => {
+          onClose={() => {
             setIsImageSearchModalVisible(false);
             setCurrentEditingProductId(null);
           }}
-        >
-          <View style={styles.modalPlaceholder}>
-            <Text style={styles.modalPlaceholderText}>
-              This is a placeholder for the ImageSearchModal component.
-              Please create the ImageSearchModal.tsx component as instructed.
-            </Text>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => {
-                setIsImageSearchModalVisible(false);
-                setCurrentEditingProductId(null);
-              }}
-            >
-              <Text style={styles.modalCloseButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </Modal>
+          onSelectImage={handleSelectImage}
+          apiKey={pexelsApiKey}
+        />
       </View>
     </>
   );
@@ -907,29 +891,5 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     fontSize: 14,
-  },
-  modalPlaceholder: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    backgroundColor: Colors.light.background,
-  },
-  modalPlaceholderText: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 20,
-    color: Colors.light.text,
-  },
-  modalCloseButton: {
-    backgroundColor: Colors.light.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  modalCloseButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "600",
   },
 });
