@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, Platform, TouchableOpacity, Switch } from "react-native";
 import { Product, Specification } from "@/types";
 import Colors from "@/constants/colors";
-import { Plus, X } from "lucide-react-native";
+import { Plus, X, Search, Image } from "lucide-react-native";
 
 interface InputPanelProps {
   nicheTitle: string;
@@ -16,6 +16,7 @@ interface InputPanelProps {
   isLoading?: boolean;
   includeBranding?: boolean;
   setIncludeBranding?: (include: boolean) => void;
+  onOpenImageSearch?: (productId: number) => void;
 }
 
 // Helper function to ensure specifications array exists
@@ -35,7 +36,8 @@ export default function InputPanel({
   setSecondaryColor,
   isLoading = false,
   includeBranding = true,
-  setIncludeBranding
+  setIncludeBranding,
+  onOpenImageSearch
 }: InputPanelProps) {
   
   const handleProductChange = (index: number, field: keyof Product, value: string | string[] | Specification[]) => {
@@ -269,12 +271,26 @@ export default function InputPanel({
               
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Image URL</Text>
-                <TextInput
-                  style={styles.input}
-                  value={safeProduct.imageUrl}
-                  onChangeText={(value) => handleProductChange(index, 'imageUrl', value)}
-                  placeholder="https://example.com/image.jpg"
-                />
+                <View style={styles.imageUrlContainer}>
+                  <TextInput
+                    style={[styles.input, styles.imageUrlInput]}
+                    value={safeProduct.imageUrl}
+                    onChangeText={(value) => handleProductChange(index, 'imageUrl', value)}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  {onOpenImageSearch && (
+                    <TouchableOpacity 
+                      style={styles.findImageButton}
+                      onPress={() => onOpenImageSearch(safeProduct.id)}
+                    >
+                      <Image size={16} color="#ffffff" />
+                      <Text style={styles.findImageButtonText}>Find Image</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <Text style={styles.helperText}>
+                  Use the "Find Image" button to search for free images from Pexels
+                </Text>
               </View>
               
               <View style={styles.inputGroup}>
@@ -514,6 +530,28 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     fontSize: 14,
+  },
+  imageUrlContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  imageUrlInput: {
+    flex: 1,
+  },
+  findImageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.light.secondary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    gap: 6,
+  },
+  findImageButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "500",
   },
   specificationHeader: {
     flexDirection: "row",

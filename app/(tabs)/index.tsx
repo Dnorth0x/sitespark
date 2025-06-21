@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, Platform, useWindowDimensions, Alert, Text, TextInput, TouchableOpacity, ActivityIndicator } from "react-native";
+import { StyleSheet, View, Platform, useWindowDimensions, Alert, Text, TextInput, TouchableOpacity, ActivityIndicator, Modal } from "react-native";
 import { Stack } from "expo-router";
 import { Product } from "@/types";
 import InputPanel from "@/components/InputPanel";
@@ -103,6 +103,11 @@ export default function SiteSparkApp() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("classic");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
+  // Pexels API state
+  const [pexelsApiKey, setPexelsApiKey] = useState<string>("");
+  const [isImageSearchModalVisible, setIsImageSearchModalVisible] = useState<boolean>(false);
+  const [currentEditingProductId, setCurrentEditingProductId] = useState<number | null>(null);
+
   // Check authentication on app load
   useEffect(() => {
     const checkAuthentication = () => {
@@ -166,6 +171,12 @@ export default function SiteSparkApp() {
         if (savedTemplate) {
           setSelectedTemplate(savedTemplate);
         }
+        
+        // Load Pexels API key
+        const savedPexelsApiKey = await storage.getItem(STORAGE_KEYS.PEXELS_API_KEY);
+        if (savedPexelsApiKey) {
+          setPexelsApiKey(savedPexelsApiKey);
+        }
       } catch (error) {
         console.error("Error loading saved data:", error);
       } finally {
@@ -225,6 +236,22 @@ export default function SiteSparkApp() {
     
     saveData();
   }, [nicheTitle, topPicks, primaryColor, secondaryColor, includeBranding, selectedTemplate, isLoading, isAuthenticated]);
+
+  // Save Pexels API key when it changes
+  useEffect(() => {
+    // Skip saving during initial load or if not authenticated
+    if (isLoading || !isAuthenticated) return;
+    
+    const savePexelsApiKey = async () => {
+      try {
+        await storage.setItem(STORAGE_KEYS.PEXELS_API_KEY, pexelsApiKey);
+      } catch (error) {
+        console.error("Error saving Pexels API key:", error);
+      }
+    };
+    
+    savePexelsApiKey();
+  }, [pexelsApiKey, isLoading, isAuthenticated]);
 
   // Handle password submission
   const handlePasswordSubmit = async () => {
@@ -336,6 +363,7 @@ export default function SiteSparkApp() {
       await storage.removeItem(STORAGE_KEYS.SECONDARY_COLOR);
       await storage.removeItem(STORAGE_KEYS.INCLUDE_BRANDING);
       await storage.removeItem(STORAGE_KEYS.SELECTED_TEMPLATE);
+      await storage.removeItem(STORAGE_KEYS.PEXELS_API_KEY);
       
       // Reset state to defaults
       setNicheTitle(DEFAULT_NICHE_TITLE);
@@ -345,6 +373,7 @@ export default function SiteSparkApp() {
       setIncludeBranding(DEFAULT_INCLUDE_BRANDING);
       setSelectedTemplate("classic");
       setGeneratedHtml("");
+      setPexelsApiKey("");
       
       // Show confirmation
       setSaveStatus("Data cleared");
@@ -367,6 +396,37 @@ export default function SiteSparkApp() {
            primaryColor === DEFAULT_PRIMARY_COLOR &&
            secondaryColor === DEFAULT_SECONDARY_COLOR &&
            includeBranding === DEFAULT_INCLUDE_BRANDING;
+  };
+
+  // Handle opening image search modal
+  const handleOpenImageSearch = (productId: number) => {
+    if (!pexelsApiKey) {
+      Alert.alert(
+        "Pexels API Key Required",
+        "Please enter your Pexels API key in the settings section below to use the image search feature.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+    
+    setCurrentEditingProductId(productId);
+    setIsImageSearchModalVisible(true);
+  };
+
+  // Handle selecting an image from search results
+  const handleSelectImage = (imageUrl: string) => {
+    if (currentEditingProductId === null) return;
+    
+    const updatedProducts = topPicks.map(product => {
+      if (product.id === currentEditingProductId) {
+        return { ...product, imageUrl };
+      }
+      return product;
+    });
+    
+    setTopPicks(updatedProducts);
+    setIsImageSearchModalVisible(false);
+    setCurrentEditingProductId(null);
   };
 
   // Mobile Navigation Component
@@ -518,7 +578,25 @@ export default function SiteSparkApp() {
                   includeBranding={includeBranding}
                   setIncludeBranding={setIncludeBranding}
                   isLoading={isLoading}
+                  onOpenImageSearch={handleOpenImageSearch}
                 />
+                
+                {/* Pexels API Key Input */}
+                <View style={styles.pexelsApiSection}>
+                  <Text style={styles.pexelsApiTitle}>Pexels API Settings</Text>
+                  <Text style={styles.pexelsApiDescription}>
+                    Enter your Pexels API key to enable image search functionality.
+                    You can get a free API key at <Text style={styles.pexelsApiLink}>pexels.com/api</Text>
+                  </Text>
+                  <TextInput
+                    style={styles.pexelsApiInput}
+                    value={pexelsApiKey}
+                    onChangeText={setPexelsApiKey}
+                    placeholder="Enter your Pexels API key"
+                    secureTextEntry={false}
+                  />
+                </View>
+                
                 <Actions
                   onGenerateHtml={handleGenerateHtml}
                   generatedHtml={generatedHtml}
@@ -558,7 +636,25 @@ export default function SiteSparkApp() {
                     includeBranding={includeBranding}
                     setIncludeBranding={setIncludeBranding}
                     isLoading={isLoading}
+                    onOpenImageSearch={handleOpenImageSearch}
                   />
+                  
+                  {/* Pexels API Key Input (Mobile) */}
+                  <View style={styles.pexelsApiSection}>
+                    <Text style={styles.pexelsApiTitle}>Pexels API Settings</Text>
+                    <Text style={styles.pexelsApiDescription}>
+                      Enter your Pexels API key to enable image search functionality.
+                      You can get a free API key at <Text style={styles.pexelsApiLink}>pexels.com/api</Text>
+                    </Text>
+                    <TextInput
+                      style={styles.pexelsApiInput}
+                      value={pexelsApiKey}
+                      onChangeText={setPexelsApiKey}
+                      placeholder="Enter your Pexels API key"
+                      secureTextEntry={false}
+                    />
+                  </View>
+                  
                   <Actions
                     onGenerateHtml={handleGenerateHtml}
                     generatedHtml={generatedHtml}
@@ -577,6 +673,34 @@ export default function SiteSparkApp() {
             </View>
           )}
         </View>
+        
+        {/* Image Search Modal Placeholder */}
+        {/* Note: The actual ImageSearchModal component will be created by the user */}
+        <Modal
+          visible={isImageSearchModalVisible}
+          animationType="slide"
+          transparent={false}
+          onRequestClose={() => {
+            setIsImageSearchModalVisible(false);
+            setCurrentEditingProductId(null);
+          }}
+        >
+          <View style={styles.modalPlaceholder}>
+            <Text style={styles.modalPlaceholderText}>
+              This is a placeholder for the ImageSearchModal component.
+              Please create the ImageSearchModal.tsx component as instructed.
+            </Text>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => {
+                setIsImageSearchModalVisible(false);
+                setCurrentEditingProductId(null);
+              }}
+            >
+              <Text style={styles.modalCloseButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
       </View>
     </>
   );
@@ -752,5 +876,60 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
     textAlign: "center",
     fontStyle: "italic",
+  },
+  pexelsApiSection: {
+    padding: 16,
+    backgroundColor: "#f3f4f6",
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  pexelsApiTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.light.text,
+    marginBottom: 8,
+  },
+  pexelsApiDescription: {
+    fontSize: 14,
+    color: "#6b7280",
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  pexelsApiLink: {
+    color: Colors.light.primary,
+    textDecorationLine: "underline",
+  },
+  pexelsApiInput: {
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 6,
+    padding: 10,
+    fontSize: 14,
+  },
+  modalPlaceholder: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: Colors.light.background,
+  },
+  modalPlaceholderText: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+    color: Colors.light.text,
+  },
+  modalCloseButton: {
+    backgroundColor: Colors.light.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  modalCloseButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
