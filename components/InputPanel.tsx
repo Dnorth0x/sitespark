@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, Platform, TouchableOpacity, Switch } from "react-native";
 import { Product, Specification } from "@/types";
 import Colors from "@/constants/colors";
-import { Plus, X, Search, Image } from "lucide-react-native";
+import { Plus, X, Search, Image, Edit3, Settings } from "lucide-react-native";
+import SettingsPanel from "@/components/SettingsPanel";
 
 interface InputPanelProps {
   nicheTitle: string;
@@ -17,6 +18,12 @@ interface InputPanelProps {
   includeBranding?: boolean;
   setIncludeBranding?: (include: boolean) => void;
   onOpenImageSearch?: (productId: number) => void;
+  pexelsApiKey: string;
+  setPexelsApiKey: (key: string) => void;
+  onResetContent: () => void;
+  onClearData: () => void;
+  isContentDefault: boolean;
+  onChangePassword: (newPassword: string) => void;
 }
 
 // Helper function to ensure specifications array exists
@@ -37,8 +44,16 @@ export default function InputPanel({
   isLoading = false,
   includeBranding = true,
   setIncludeBranding,
-  onOpenImageSearch
+  onOpenImageSearch,
+  pexelsApiKey,
+  setPexelsApiKey,
+  onResetContent,
+  onClearData,
+  isContentDefault,
+  onChangePassword
 }: InputPanelProps) {
+  
+  const [activeView, setActiveView] = useState<'editor' | 'settings'>('editor');
   
   const handleProductChange = (index: number, field: keyof Product, value: string | string[] | Specification[]) => {
     const updatedProducts = [...topPicks];
@@ -129,260 +144,328 @@ export default function InputPanel({
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.mainHeading}>SiteSpark: Your Niche Site Generator</Text>
-      
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Niche Title</Text>
-        <TextInput
-          style={styles.input}
-          value={nicheTitle}
-          onChangeText={setNicheTitle}
-          placeholder="Enter your niche title (e.g., Best Laptops of 2025)"
-        />
+    <View style={styles.container}>
+      {/* Tab Navigation */}
+      <View style={styles.tabNavigation}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeView === 'editor' && styles.tabButtonActive
+          ]}
+          onPress={() => setActiveView('editor')}
+        >
+          <Edit3 size={16} color={activeView === 'editor' ? "#ffffff" : Colors.light.primary} />
+          <Text style={[
+            styles.tabButtonText,
+            activeView === 'editor' && styles.tabButtonTextActive
+          ]}>
+            Editor
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeView === 'settings' && styles.tabButtonActive
+          ]}
+          onPress={() => setActiveView('settings')}
+        >
+          <Settings size={16} color={activeView === 'settings' ? "#ffffff" : Colors.light.primary} />
+          <Text style={[
+            styles.tabButtonText,
+            activeView === 'settings' && styles.tabButtonTextActive
+          ]}>
+            Settings
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Color Customization</Text>
-        
-        <View style={styles.colorRow}>
-          <View style={styles.colorGroup}>
-            <Text style={styles.colorLabel}>Primary Color</Text>
-            <View style={styles.colorPickerContainer}>
-              {Platform.OS === "web" ? (
-                <input
-                  type="color"
-                  value={primaryColor}
-                  onChange={(e) => setPrimaryColor(e.target.value)}
-                  style={{
-                    width: 60,
-                    height: 40,
-                    border: "1px solid #d1d5db",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                    backgroundColor: "transparent"
-                  }}
-                />
-              ) : (
-                <View style={[styles.colorPreview, { backgroundColor: primaryColor }]} />
-              )}
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                value={primaryColor}
-                onChangeText={setPrimaryColor}
-                placeholder="#4f46e5"
-              />
-            </View>
-          </View>
+      {/* Content based on active view */}
+      {activeView === 'editor' ? (
+        <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
+          <Text style={styles.mainHeading}>SiteSpark: Your Niche Site Generator</Text>
           
-          <View style={styles.colorGroup}>
-            <Text style={styles.colorLabel}>Secondary Color</Text>
-            <View style={styles.colorPickerContainer}>
-              {Platform.OS === "web" ? (
-                <input
-                  type="color"
-                  value={secondaryColor}
-                  onChange={(e) => setSecondaryColor(e.target.value)}
-                  style={{
-                    width: 60,
-                    height: 40,
-                    border: "1px solid #d1d5db",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                    backgroundColor: "transparent"
-                  }}
-                />
-              ) : (
-                <View style={[styles.colorPreview, { backgroundColor: secondaryColor }]} />
-              )}
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                value={secondaryColor}
-                onChangeText={setSecondaryColor}
-                placeholder="#10b981"
-              />
-            </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Niche Title</Text>
+            <TextInput
+              style={styles.input}
+              value={nicheTitle}
+              onChangeText={setNicheTitle}
+              placeholder="Enter your niche title (e.g., Best Laptops of 2025)"
+            />
           </View>
-        </View>
-        
-        <Text style={styles.helperText}>
-          {Platform.OS === "web" 
-            ? "Use the color picker or enter hex color codes. Primary color is used for buttons, secondary for hero section." 
-            : "Enter hex color codes (e.g., #4f46e5). Primary color is used for buttons, secondary for hero section."
-          }
-        </Text>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Site Options</Text>
-        
-        <View style={styles.optionRow}>
-          <View style={styles.optionContent}>
-            <Text style={styles.optionLabel}>Include SiteSpark Branding</Text>
-            <Text style={styles.optionDescription}>
-              Add a small "Powered by SiteSpark" footer to support our development
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Color Customization</Text>
+            
+            <View style={styles.colorRow}>
+              <View style={styles.colorGroup}>
+                <Text style={styles.colorLabel}>Primary Color</Text>
+                <View style={styles.colorPickerContainer}>
+                  {Platform.OS === "web" ? (
+                    <input
+                      type="color"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      style={{
+                        width: 60,
+                        height: 40,
+                        border: "1px solid #d1d5db",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        backgroundColor: "transparent"
+                      }}
+                    />
+                  ) : (
+                    <View style={[styles.colorPreview, { backgroundColor: primaryColor }]} />
+                  )}
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    value={primaryColor}
+                    onChangeText={setPrimaryColor}
+                    placeholder="#4f46e5"
+                  />
+                </View>
+              </View>
+              
+              <View style={styles.colorGroup}>
+                <Text style={styles.colorLabel}>Secondary Color</Text>
+                <View style={styles.colorPickerContainer}>
+                  {Platform.OS === "web" ? (
+                    <input
+                      type="color"
+                      value={secondaryColor}
+                      onChange={(e) => setSecondaryColor(e.target.value)}
+                      style={{
+                        width: 60,
+                        height: 40,
+                        border: "1px solid #d1d5db",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        backgroundColor: "transparent"
+                      }}
+                    />
+                  ) : (
+                    <View style={[styles.colorPreview, { backgroundColor: secondaryColor }]} />
+                  )}
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    value={secondaryColor}
+                    onChangeText={setSecondaryColor}
+                    placeholder="#10b981"
+                  />
+                </View>
+              </View>
+            </View>
+            
+            <Text style={styles.helperText}>
+              {Platform.OS === "web" 
+                ? "Use the color picker or enter hex color codes. Primary color is used for buttons, secondary for hero section." 
+                : "Enter hex color codes (e.g., #4f46e5). Primary color is used for buttons, secondary for hero section."
+              }
             </Text>
           </View>
-          <Switch
-            value={includeBranding}
-            onValueChange={setIncludeBranding}
-            trackColor={{ false: "#d1d5db", true: Colors.light.primary }}
-            thumbColor={includeBranding ? "#ffffff" : "#f4f3f4"}
-          />
-        </View>
-      </View>
-      
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Products ({topPicks.length})</Text>
-          <TouchableOpacity style={styles.addButton} onPress={addProduct}>
-            <Plus size={16} color="#ffffff" />
-            <Text style={styles.addButtonText}>Add Product</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {topPicks.map((product, index) => {
-          // CRITICAL: Ensure product has specifications before rendering
-          const safeProduct = ensureSpecifications(product);
           
-          return (
-            <View key={safeProduct.id} style={styles.productCard}>
-              <View style={styles.productCardHeader}>
-                <Text style={styles.productCardTitle}>Product {index + 1}</Text>
-                {topPicks.length > 1 && (
-                  <TouchableOpacity 
-                    style={styles.removeButton} 
-                    onPress={() => removeProduct(index)}
-                  >
-                    <X size={16} color="#ef4444" />
-                  </TouchableOpacity>
-                )}
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Name</Text>
-                <TextInput
-                  style={styles.input}
-                  value={safeProduct.name}
-                  onChangeText={(value) => handleProductChange(index, 'name', value)}
-                  placeholder="Product name"
-                />
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Image URL</Text>
-                <View style={styles.imageUrlContainer}>
-                  <TextInput
-                    style={[styles.input, styles.imageUrlInput]}
-                    value={safeProduct.imageUrl}
-                    onChangeText={(value) => handleProductChange(index, 'imageUrl', value)}
-                    placeholder="https://example.com/image.jpg"
-                  />
-                  {onOpenImageSearch && (
-                    <TouchableOpacity 
-                      style={styles.findImageButton}
-                      onPress={() => onOpenImageSearch(safeProduct.id)}
-                    >
-                      <Image size={16} color="#ffffff" />
-                      <Text style={styles.findImageButtonText}>Find Image</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-                <Text style={styles.helperText}>
-                  Use the "Find Image" button to search for free images from Pexels
-                </Text>
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Tagline</Text>
-                <TextInput
-                  style={styles.input}
-                  value={safeProduct.tagline}
-                  onChangeText={(value) => handleProductChange(index, 'tagline', value)}
-                  placeholder="Short description of the product"
-                />
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Pros (comma-separated)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={safeProduct.pros.join(', ')}
-                  onChangeText={(value) => handleProductChange(index, 'pros', value)}
-                  placeholder="Great battery, Fast processor, Beautiful design"
-                />
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Cons (comma-separated)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={safeProduct.cons.join(', ')}
-                  onChangeText={(value) => handleProductChange(index, 'cons', value)}
-                  placeholder="Expensive, Heavy, Limited ports"
-                />
-              </View>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Affiliate Link</Text>
-                <TextInput
-                  style={styles.input}
-                  value={safeProduct.affiliateLink}
-                  onChangeText={(value) => handleProductChange(index, 'affiliateLink', value)}
-                  placeholder="https://amazon.com/product"
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <View style={styles.specificationHeader}>
-                  <Text style={styles.label}>Specifications</Text>
-                  <TouchableOpacity 
-                    style={styles.addSpecButton} 
-                    onPress={() => addSpecification(index)}
-                  >
-                    <Plus size={14} color="#ffffff" />
-                    <Text style={styles.addSpecButtonText}>Add Spec</Text>
-                  </TouchableOpacity>
-                </View>
-                
-                {/* CRITICAL: Use safeProduct.specifications which is guaranteed to be an array */}
-                {safeProduct.specifications.map((spec, specIndex) => (
-                  <View key={spec.id} style={styles.specificationRow}>
-                    <TextInput
-                      style={[styles.input, styles.specKeyInput]}
-                      value={spec.key}
-                      onChangeText={(value) => handleSpecificationChange(index, specIndex, 'key', value)}
-                      placeholder="Key (e.g., Processor)"
-                    />
-                    <TextInput
-                      style={[styles.input, styles.specValueInput]}
-                      value={spec.value}
-                      onChangeText={(value) => handleSpecificationChange(index, specIndex, 'value', value)}
-                      placeholder="Value (e.g., Intel i7)"
-                    />
-                    <TouchableOpacity 
-                      style={styles.removeSpecButton} 
-                      onPress={() => removeSpecification(index, specIndex)}
-                    >
-                      <X size={14} color="#ef4444" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-                
-                {safeProduct.specifications.length === 0 && (
-                  <Text style={styles.noSpecsText}>No specifications added yet. Click "Add Spec" to get started.</Text>
-                )}
-              </View>
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Products ({topPicks.length})</Text>
+              <TouchableOpacity style={styles.addButton} onPress={addProduct}>
+                <Plus size={16} color="#ffffff" />
+                <Text style={styles.addButtonText}>Add Product</Text>
+              </TouchableOpacity>
             </View>
-          );
-        })}
-      </View>
-    </ScrollView>
+            
+            {topPicks.map((product, index) => {
+              // CRITICAL: Ensure product has specifications before rendering
+              const safeProduct = ensureSpecifications(product);
+              
+              return (
+                <View key={safeProduct.id} style={styles.productCard}>
+                  <View style={styles.productCardHeader}>
+                    <Text style={styles.productCardTitle}>Product {index + 1}</Text>
+                    {topPicks.length > 1 && (
+                      <TouchableOpacity 
+                        style={styles.removeButton} 
+                        onPress={() => removeProduct(index)}
+                      >
+                        <X size={16} color="#ef4444" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Name</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={safeProduct.name}
+                      onChangeText={(value) => handleProductChange(index, 'name', value)}
+                      placeholder="Product name"
+                    />
+                  </View>
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Image URL</Text>
+                    <View style={styles.imageUrlContainer}>
+                      <TextInput
+                        style={[styles.input, styles.imageUrlInput]}
+                        value={safeProduct.imageUrl}
+                        onChangeText={(value) => handleProductChange(index, 'imageUrl', value)}
+                        placeholder="https://example.com/image.jpg"
+                      />
+                      {onOpenImageSearch && (
+                        <TouchableOpacity 
+                          style={styles.findImageButton}
+                          onPress={() => onOpenImageSearch(safeProduct.id)}
+                        >
+                          <Image size={16} color="#ffffff" />
+                          <Text style={styles.findImageButtonText}>Find Image</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <Text style={styles.helperText}>
+                      Use the "Find Image" button to search for free images from Pexels
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Tagline</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={safeProduct.tagline}
+                      onChangeText={(value) => handleProductChange(index, 'tagline', value)}
+                      placeholder="Short description of the product"
+                    />
+                  </View>
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Pros (comma-separated)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={safeProduct.pros.join(', ')}
+                      onChangeText={(value) => handleProductChange(index, 'pros', value)}
+                      placeholder="Great battery, Fast processor, Beautiful design"
+                    />
+                  </View>
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Cons (comma-separated)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={safeProduct.cons.join(', ')}
+                      onChangeText={(value) => handleProductChange(index, 'cons', value)}
+                      placeholder="Expensive, Heavy, Limited ports"
+                    />
+                  </View>
+                  
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Affiliate Link</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={safeProduct.affiliateLink}
+                      onChangeText={(value) => handleProductChange(index, 'affiliateLink', value)}
+                      placeholder="https://amazon.com/product"
+                    />
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <View style={styles.specificationHeader}>
+                      <Text style={styles.label}>Specifications</Text>
+                      <TouchableOpacity 
+                        style={styles.addSpecButton} 
+                        onPress={() => addSpecification(index)}
+                      >
+                        <Plus size={14} color="#ffffff" />
+                        <Text style={styles.addSpecButtonText}>Add Spec</Text>
+                      </TouchableOpacity>
+                    </View>
+                    
+                    {/* CRITICAL: Use safeProduct.specifications which is guaranteed to be an array */}
+                    {safeProduct.specifications.map((spec, specIndex) => (
+                      <View key={spec.id} style={styles.specificationRow}>
+                        <TextInput
+                          style={[styles.input, styles.specKeyInput]}
+                          value={spec.key}
+                          onChangeText={(value) => handleSpecificationChange(index, specIndex, 'key', value)}
+                          placeholder="Key (e.g., Processor)"
+                        />
+                        <TextInput
+                          style={[styles.input, styles.specValueInput]}
+                          value={spec.value}
+                          onChangeText={(value) => handleSpecificationChange(index, specIndex, 'value', value)}
+                          placeholder="Value (e.g., Intel i7)"
+                        />
+                        <TouchableOpacity 
+                          style={styles.removeSpecButton} 
+                          onPress={() => removeSpecification(index, specIndex)}
+                        >
+                          <X size={14} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    
+                    {safeProduct.specifications.length === 0 && (
+                      <Text style={styles.noSpecsText}>No specifications added yet. Click "Add Spec" to get started.</Text>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </ScrollView>
+      ) : (
+        <SettingsPanel
+          pexelsApiKey={pexelsApiKey}
+          setPexelsApiKey={setPexelsApiKey}
+          includeBranding={includeBranding}
+          setIncludeBranding={setIncludeBranding}
+          onResetContent={onResetContent}
+          onClearData={onClearData}
+          isContentDefault={isContentDefault}
+          onChangePassword={onChangePassword}
+          isLoading={isLoading}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  tabNavigation: {
+    flexDirection: "row",
+    backgroundColor: "#f3f4f6",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  tabButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginRight: 8,
+    gap: 8,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  tabButtonActive: {
+    backgroundColor: Colors.light.primary,
+    borderColor: Colors.light.primary,
+  },
+  tabButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: Colors.light.primary,
+  },
+  tabButtonTextActive: {
+    color: "#ffffff",
+  },
+  scrollContainer: {
     flex: 1,
   },
   contentContainer: {
@@ -464,32 +547,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6b7280",
     marginTop: 6,
-  },
-  optionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: "#f9fafb",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  optionContent: {
-    flex: 1,
-    marginRight: 16,
-  },
-  optionLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: Colors.light.text,
-    marginBottom: 4,
-  },
-  optionDescription: {
-    fontSize: 14,
-    color: "#6b7280",
-    lineHeight: 20,
   },
   productCard: {
     backgroundColor: "#f9fafb",

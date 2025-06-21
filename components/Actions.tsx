@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity, Text, Platform, ScrollView, useWindowDimensions, ActivityIndicator } from "react-native";
 import * as Haptics from "expo-haptics";
-import { AlertCircle, ChevronDown, Copy, RotateCcw } from "lucide-react-native";
+import { ChevronDown, Copy } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { Picker } from "@react-native-picker/picker";
 
@@ -9,9 +9,6 @@ interface ActionsProps {
   onGenerateHtml: () => void;
   generatedHtml: string;
   saveStatus: string;
-  onClearData: () => void;
-  onResetContent: () => void;
-  isContentDefault: boolean;
   selectedTemplate: string;
   setSelectedTemplate: (template: string) => void;
   isGenerating?: boolean;
@@ -32,27 +29,10 @@ const DocumentIcon = ({ size = 16, color = "#ffffff" }) => (
   </View>
 );
 
-const RefreshIcon = ({ size = 16, color = "#f59e0b" }) => (
-  <View style={{ width: size, height: size }}>
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path
-        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  </View>
-);
-
 export default function Actions({ 
   onGenerateHtml, 
   generatedHtml, 
   saveStatus, 
-  onClearData,
-  onResetContent,
-  isContentDefault,
   selectedTemplate,
   setSelectedTemplate,
   isGenerating = false
@@ -189,52 +169,6 @@ export default function Actions({
             </Text>
           </View>
         )}
-        
-        <View style={[styles.actionButtonsRow, isMobile && styles.mobileActionButtonsRow]}>
-          <TouchableOpacity 
-            style={[
-              styles.resetButton, 
-              isMobile && styles.mobileResetButton,
-              (isContentDefault || isGenerating) && styles.disabledResetButton
-            ]} 
-            onPress={onResetContent}
-            disabled={isContentDefault || isGenerating}
-          >
-            {Platform.OS === "web" && (
-              <RefreshIcon 
-                size={16} 
-                color={(isContentDefault || isGenerating) ? "#9ca3af" : "#f59e0b"} 
-              />
-            )}
-            {Platform.OS !== "web" && (
-              <RotateCcw size={16} color={(isContentDefault || isGenerating) ? "#9ca3af" : "#f59e0b"} style={styles.resetIcon} />
-            )}
-            <Text style={[
-              styles.resetButtonText,
-              (isContentDefault || isGenerating) && styles.disabledButtonText
-            ]}>
-              Reset Content
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[
-              styles.clearButton, 
-              isMobile && styles.mobileClearButton,
-              isGenerating && styles.disabledButton
-            ]} 
-            onPress={onClearData}
-            disabled={isGenerating}
-          >
-            <AlertCircle size={16} color={isGenerating ? "#9ca3af" : "#ef4444"} style={styles.clearIcon} />
-            <Text style={[
-              styles.clearButtonText,
-              isGenerating && styles.disabledButtonText
-            ]}>
-              Clear My Data
-            </Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );
@@ -386,60 +320,5 @@ const styles = StyleSheet.create({
   },
   clearedStatus: {
     color: "#f59e0b",
-  },
-  actionButtonsRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  mobileActionButtonsRow: {
-    flexDirection: "column",
-    gap: 8,
-  },
-  resetButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    backgroundColor: "#fef3c7",
-    justifyContent: "center",
-    gap: 6,
-  },
-  mobileResetButton: {
-    paddingVertical: 12,
-    width: "100%",
-  },
-  disabledResetButton: {
-    backgroundColor: "#f9fafb",
-    opacity: 0.6,
-  },
-  resetIcon: {
-    marginRight: 6,
-  },
-  resetButtonText: {
-    color: "#f59e0b",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  clearButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    backgroundColor: "#fee2e2",
-    justifyContent: "center",
-  },
-  mobileClearButton: {
-    paddingVertical: 12,
-    width: "100%",
-  },
-  clearIcon: {
-    marginRight: 6,
-  },
-  clearButtonText: {
-    color: "#ef4444",
-    fontSize: 14,
-    fontWeight: "500",
   },
 });

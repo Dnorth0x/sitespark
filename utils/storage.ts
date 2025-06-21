@@ -10,6 +10,7 @@ export const STORAGE_KEYS = {
   INCLUDE_BRANDING: 'sitespark_include_branding',
   SELECTED_TEMPLATE: 'sitespark_selected_template',
   PEXELS_API_KEY: 'sitespark_pexels_api_key',
+  APP_PASSWORD: 'sitespark_app_password',
 } as const;
 
 // Storage interface

@@ -10,8 +10,8 @@ import Colors from "@/constants/colors";
 import storage, { STORAGE_KEYS } from "@/utils/storage";
 import ImageSearchModal from "@/components/ImageSearchModal";
 
-// Password for accessing the app
-const CORRECT_PASSWORD = "Spark2025!";
+// Default password for accessing the app
+const DEFAULT_PASSWORD = "Spark2025!";
 
 // Default data constants - extracted outside component for reset functionality
 const DEFAULT_NICHE_TITLE = "Best Laptops of 2025";
@@ -88,6 +88,7 @@ export default function SiteSparkApp() {
   const [passwordInput, setPasswordInput] = useState<string>("");
   const [passwordError, setPasswordError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [currentPassword, setCurrentPassword] = useState<string>(DEFAULT_PASSWORD);
 
   // Mobile navigation state
   const [activeMobileView, setActiveMobileView] = useState<'form' | 'preview'>('form');
@@ -111,7 +112,7 @@ export default function SiteSparkApp() {
 
   // Check authentication on app load
   useEffect(() => {
-    const checkAuthentication = () => {
+    const checkAuthentication = async () => {
       if (Platform.OS === "web") {
         const isAuthenticatedSession = sessionStorage.getItem("is-authenticated");
         if (isAuthenticatedSession === "true") {
@@ -120,6 +121,16 @@ export default function SiteSparkApp() {
       } else {
         // For mobile, we'll skip authentication for now
         setIsAuthenticated(true);
+      }
+      
+      // Load saved password
+      try {
+        const savedPassword = await storage.getItem(STORAGE_KEYS.APP_PASSWORD);
+        if (savedPassword) {
+          setCurrentPassword(savedPassword);
+        }
+      } catch (error) {
+        console.error("Error loading saved password:", error);
       }
     };
     
@@ -263,7 +274,7 @@ export default function SiteSparkApp() {
     // Add a small delay to show the loading state
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    if (passwordInput === CORRECT_PASSWORD) {
+    if (passwordInput === currentPassword) {
       setIsAuthenticated(true);
       setPasswordError("");
       
@@ -277,6 +288,25 @@ export default function SiteSparkApp() {
     }
     
     setIsSubmitting(false);
+  };
+
+  // Handle password change
+  const handleChangePassword = async (newPassword: string) => {
+    try {
+      // Save new password to storage
+      await storage.setItem(STORAGE_KEYS.APP_PASSWORD, newPassword);
+      
+      // Update current password state
+      setCurrentPassword(newPassword);
+      
+      // Clear session authentication to force re-login with new password
+      if (Platform.OS === "web") {
+        sessionStorage.removeItem("is-authenticated");
+      }
+    } catch (error) {
+      console.error("Error saving new password:", error);
+      throw error;
+    }
   };
 
   // Generate HTML function (now async)
@@ -365,6 +395,7 @@ export default function SiteSparkApp() {
       await storage.removeItem(STORAGE_KEYS.INCLUDE_BRANDING);
       await storage.removeItem(STORAGE_KEYS.SELECTED_TEMPLATE);
       await storage.removeItem(STORAGE_KEYS.PEXELS_API_KEY);
+      // Note: We don't clear the password as that would lock the user out
       
       // Reset state to defaults
       setNicheTitle(DEFAULT_NICHE_TITLE);
@@ -404,7 +435,7 @@ export default function SiteSparkApp() {
     if (!pexelsApiKey) {
       Alert.alert(
         "Pexels API Key Required",
-        "Please enter your Pexels API key in the settings section below to use the image search feature.",
+        "Please enter your Pexels API key in the Settings tab to use the image search feature.",
         [{ text: "OK" }]
       );
       return;
@@ -444,7 +475,7 @@ export default function SiteSparkApp() {
           styles.mobileNavButtonText,
           activeMobileView === 'form' && styles.mobileNavButtonTextActive
         ]}>
-          Form
+          Editor
         </Text>
       </TouchableOpacity>
       
@@ -580,31 +611,18 @@ export default function SiteSparkApp() {
                   setIncludeBranding={setIncludeBranding}
                   isLoading={isLoading}
                   onOpenImageSearch={handleOpenImageSearch}
+                  pexelsApiKey={pexelsApiKey}
+                  setPexelsApiKey={setPexelsApiKey}
+                  onResetContent={handleResetContent}
+                  onClearData={handleClearData}
+                  isContentDefault={isContentDefault()}
+                  onChangePassword={handleChangePassword}
                 />
-                
-                {/* Pexels API Key Input */}
-                <View style={styles.pexelsApiSection}>
-                  <Text style={styles.pexelsApiTitle}>Pexels API Settings</Text>
-                  <Text style={styles.pexelsApiDescription}>
-                    Enter your Pexels API key to enable image search functionality.
-                    You can get a free API key at <Text style={styles.pexelsApiLink}>pexels.com/api</Text>
-                  </Text>
-                  <TextInput
-                    style={styles.pexelsApiInput}
-                    value={pexelsApiKey}
-                    onChangeText={setPexelsApiKey}
-                    placeholder="Enter your Pexels API key"
-                    secureTextEntry={false}
-                  />
-                </View>
                 
                 <Actions
                   onGenerateHtml={handleGenerateHtml}
                   generatedHtml={generatedHtml}
                   saveStatus={saveStatus}
-                  onClearData={handleClearData}
-                  onResetContent={handleResetContent}
-                  isContentDefault={isContentDefault()}
                   selectedTemplate={selectedTemplate}
                   setSelectedTemplate={setSelectedTemplate}
                   isGenerating={isGenerating}
@@ -638,31 +656,18 @@ export default function SiteSparkApp() {
                     setIncludeBranding={setIncludeBranding}
                     isLoading={isLoading}
                     onOpenImageSearch={handleOpenImageSearch}
+                    pexelsApiKey={pexelsApiKey}
+                    setPexelsApiKey={setPexelsApiKey}
+                    onResetContent={handleResetContent}
+                    onClearData={handleClearData}
+                    isContentDefault={isContentDefault()}
+                    onChangePassword={handleChangePassword}
                   />
-                  
-                  {/* Pexels API Key Input (Mobile) */}
-                  <View style={styles.pexelsApiSection}>
-                    <Text style={styles.pexelsApiTitle}>Pexels API Settings</Text>
-                    <Text style={styles.pexelsApiDescription}>
-                      Enter your Pexels API key to enable image search functionality.
-                      You can get a free API key at <Text style={styles.pexelsApiLink}>pexels.com/api</Text>
-                    </Text>
-                    <TextInput
-                      style={styles.pexelsApiInput}
-                      value={pexelsApiKey}
-                      onChangeText={setPexelsApiKey}
-                      placeholder="Enter your Pexels API key"
-                      secureTextEntry={false}
-                    />
-                  </View>
                   
                   <Actions
                     onGenerateHtml={handleGenerateHtml}
                     generatedHtml={generatedHtml}
                     saveStatus={saveStatus}
-                    onClearData={handleClearData}
-                    onResetContent={handleResetContent}
-                    isContentDefault={isContentDefault()}
                     selectedTemplate={selectedTemplate}
                     setSelectedTemplate={setSelectedTemplate}
                     isGenerating={isGenerating}
@@ -860,36 +865,5 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
     textAlign: "center",
     fontStyle: "italic",
-  },
-  pexelsApiSection: {
-    padding: 16,
-    backgroundColor: "#f3f4f6",
-    borderRadius: 8,
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  pexelsApiTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: Colors.light.text,
-    marginBottom: 8,
-  },
-  pexelsApiDescription: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginBottom: 12,
-    lineHeight: 20,
-  },
-  pexelsApiLink: {
-    color: Colors.light.primary,
-    textDecorationLine: "underline",
-  },
-  pexelsApiInput: {
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 6,
-    padding: 10,
-    fontSize: 14,
   },
 });
