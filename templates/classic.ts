@@ -1,5 +1,5 @@
 import { Product } from "@/types";
-import { generateHtmlHead, generateHeroSection, generateBrandingFooter } from "@/utils/htmlGenerator";
+import { generateHtmlHead, generateHeroSection, generateBrandingFooter, generateClosingBodyTag } from "@/utils/htmlGenerator";
 
 export default function generateClassicTemplate(
   nicheTitle: string, 
@@ -77,6 +77,7 @@ export default function generateClassicTemplate(
   const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles, products);
   const heroSection = generateHeroSection(nicheTitle);
   const brandingFooter = generateBrandingFooter(includeBranding);
+  const closingBodyTag = generateClosingBodyTag();
 
   const productCardsHtml = products.map(product => {
     const prosListItems = product.pros.map(pro => `<li>${pro}</li>`).join("");
@@ -96,7 +97,7 @@ export default function generateClassicTemplate(
     ` : "";
 
     return `
-<div class="product-card">
+<div class="product-card" data-aos="fade-up">
   <img src="${product.imageUrl}" alt="${product.name}" class="product-image">
   <div class="product-details">
     <h2>${product.name}</h2>
@@ -127,6 +128,6 @@ export default function generateClassicTemplate(
     ${heroSection}${productCardsHtml}
   </div>
   ${brandingFooter}
-</body>
+  ${closingBodyTag}
 </html>`;
 }

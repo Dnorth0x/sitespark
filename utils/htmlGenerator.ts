@@ -108,6 +108,55 @@ export const generateBrandingFooter = (includeBranding: boolean): string => {
   `;
 };
 
+// Generate animation and smooth scrolling libraries
+export const generateAnimationLibraries = (): string => {
+  return `
+    <!-- AOS (Animate On Scroll) Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <!-- Lenis (Smooth Scrolling) Library -->
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1/bundled/lenis.min.js"></script>
+  `;
+};
+
+// Generate initialization scripts for animations and smooth scrolling
+export const generateInitializationScripts = (): string => {
+  return `
+    <script>
+      // Initialize AOS (Animate On Scroll)
+      document.addEventListener('DOMContentLoaded', function() {
+        AOS.init({
+          duration: 800,
+          easing: 'ease-in-out',
+          once: true,
+          offset: 100
+        });
+        
+        // Initialize Lenis (Smooth Scrolling)
+        const lenis = new Lenis({
+          duration: 1.2,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          direction: 'vertical',
+          gestureDirection: 'vertical',
+          smooth: true,
+          mouseMultiplier: 1,
+          smoothTouch: false,
+          touchMultiplier: 2,
+          infinite: false,
+        });
+        
+        function raf(time) {
+          lenis.raf(time);
+          requestAnimationFrame(raf);
+        }
+        
+        requestAnimationFrame(raf);
+      });
+    </script>
+  `;
+};
+
 // Generate common HTML head that all templates can use
 export const generateHtmlHead = (
   nicheTitle: string, 
@@ -186,6 +235,7 @@ export const generateHtmlHead = (
   `;
 
   const openGraphTags = generateOpenGraphTags(nicheTitle, products);
+  const animationLibraries = generateAnimationLibraries();
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -195,6 +245,7 @@ export const generateHtmlHead = (
   <title>${nicheTitle}</title>
   <meta name="description" content="Discover the best ${nicheTitle.toLowerCase()} with our expert reviews and comparisons. Find the perfect product for your needs." />
   ${openGraphTags}
+  ${animationLibraries}
   <style>
     ${commonStyles}
     ${additionalStyles}
@@ -204,9 +255,16 @@ export const generateHtmlHead = (
 
 // Generate hero section that all templates can use
 export const generateHeroSection = (nicheTitle: string): string => {
-  return `<div class="hero">
+  return `<div class="hero" data-aos="fade-down">
     <h1>${nicheTitle}</h1>
   </div>`;
+};
+
+// Generate closing body tag with initialization scripts
+export const generateClosingBodyTag = (): string => {
+  const initializationScripts = generateInitializationScripts();
+  return `${initializationScripts}
+</body>`;
 };
 
 // Fallback classic template (inline) for error cases
@@ -264,13 +322,14 @@ const generateFallbackClassicTemplate = (
   const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles, products);
   const heroSection = generateHeroSection(nicheTitle);
   const brandingFooter = generateBrandingFooter(includeBranding);
+  const closingBodyTag = generateClosingBodyTag();
 
   const productCardsHtml = products.map(product => {
     const prosListItems = product.pros.map(pro => `<li>${pro}</li>`).join("");
     const consListItems = product.cons.map(con => `<li>${con}</li>`).join("");
 
     return `
-<div class="product-card">
+<div class="product-card" data-aos="fade-up">
   <img src="${product.imageUrl}" alt="${product.name}" class="product-image">
   <div class="product-details">
     <h2>${product.name}</h2>
@@ -300,6 +359,6 @@ const generateFallbackClassicTemplate = (
     ${heroSection}${productCardsHtml}
   </div>
   ${brandingFooter}
-</body>
+  ${closingBodyTag}
 </html>`;
 };

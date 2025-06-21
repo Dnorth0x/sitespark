@@ -1,5 +1,5 @@
 import { Product } from "@/types";
-import { generateHtmlHead, generateHeroSection, generateBrandingFooter } from "@/utils/htmlGenerator";
+import { generateHtmlHead, generateHeroSection, generateBrandingFooter, generateClosingBodyTag } from "@/utils/htmlGenerator";
 
 export default function generateAnalystTemplate(
   nicheTitle: string, 
@@ -162,9 +162,10 @@ export default function generateAnalystTemplate(
   const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles, products);
   const heroSection = generateHeroSection(nicheTitle);
   const brandingFooter = generateBrandingFooter(includeBranding);
+  const closingBodyTag = generateClosingBodyTag();
 
   const introText = `
-    <div class="analyst-intro">
+    <div class="analyst-intro" data-aos="fade-up">
       <h2>Expert Analysis & Recommendations</h2>
       <p>Our team has thoroughly tested and analyzed each product in this category. Below you'll find detailed breakdowns of the top contenders, including comprehensive pros and cons analysis, technical specifications, and our expert verdict on each option.</p>
     </div>
@@ -198,7 +199,7 @@ export default function generateAnalystTemplate(
     const verdict = verdicts[index] || "A quality option worth considering for the right user.";
 
     return `
-    <div class="product-analysis">
+    <div class="product-analysis" data-aos="fade-up">
       <div class="product-header">
         <img src="${product.imageUrl}" alt="${product.name}" class="product-image-analyst">
         <div class="product-header-content">
@@ -240,6 +241,6 @@ export default function generateAnalystTemplate(
     ${productAnalysisHtml}
   </div>
   ${brandingFooter}
-</body>
+  ${closingBodyTag}
 </html>`;
 }

@@ -1,5 +1,5 @@
 import { Product } from "@/types";
-import { generateHtmlHead, generateHeroSection, generateBrandingFooter } from "@/utils/htmlGenerator";
+import { generateHtmlHead, generateHeroSection, generateBrandingFooter, generateClosingBodyTag } from "@/utils/htmlGenerator";
 
 export default function generateTableTemplate(
   nicheTitle: string, 
@@ -88,13 +88,14 @@ export default function generateTableTemplate(
   const head = generateHtmlHead(nicheTitle, primaryColor, secondaryColor, templateStyles, products);
   const heroSection = generateHeroSection(nicheTitle);
   const brandingFooter = generateBrandingFooter(includeBranding);
+  const closingBodyTag = generateClosingBodyTag();
 
   const tableRowsHtml = products.map(product => {
     const prosListItems = product.pros.slice(0, 3).map(pro => `<li>${pro}</li>`).join("");
     const consListItems = product.cons.slice(0, 3).map(con => `<li>${con}</li>`).join("");
 
     return `
-    <tr>
+    <tr data-aos="fade-up">
       <td>
         <img src="${product.imageUrl}" alt="${product.name}" class="product-image-small">
       </td>
@@ -122,7 +123,7 @@ export default function generateTableTemplate(
 <body>
   <div class="container">
     ${heroSection}
-    <table class="comparison-table">
+    <table class="comparison-table" data-aos="fade-up">
       <thead>
         <tr>
           <th>Image</th>
@@ -138,6 +139,6 @@ export default function generateTableTemplate(
     </table>
   </div>
   ${brandingFooter}
-</body>
+  ${closingBodyTag}
 </html>`;
 }
