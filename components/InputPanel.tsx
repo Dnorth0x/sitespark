@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, Platform, TouchableOpacity, Switch } from "react-native";
 import { Product, Specification } from "@/types";
 import Colors from "@/constants/colors";
-import { Plus, X, Search, Image, Edit3, Settings } from "lucide-react-native";
+import { Plus, X, Search, Image, Edit3, Settings, Wand2 } from "lucide-react-native";
 import SettingsPanel from "@/components/SettingsPanel";
 import Actions from "@/components/Actions";
+import { createClient } from "pexels";
 
 interface InputPanelProps {
   nicheTitle: string;
@@ -39,6 +40,34 @@ const ensureSpecifications = (product: Product): Product => ({
   specifications: Array.isArray(product.specifications) ? product.specifications : []
 });
 
+// Types for Pexels API responses
+interface PexelsPhoto {
+  id: number;
+  width: number;
+  height: number;
+  url: string;
+  photographer: string;
+  photographer_url: string;
+  src: {
+    original: string;
+    large2x: string;
+    large: string;
+    medium: string;
+    small: string;
+    portrait: string;
+    landscape: string;
+    tiny: string;
+  };
+}
+
+interface PexelsSearchResult {
+  total_results: number;
+  page: number;
+  per_page: number;
+  photos: PexelsPhoto[];
+  next_page: string;
+}
+
 export default function InputPanel({ 
   nicheTitle, 
   setNicheTitle, 
@@ -67,6 +96,7 @@ export default function InputPanel({
 }: InputPanelProps) {
   
   const [activeView, setActiveView] = useState<'editor' | 'settings'>('editor');
+  const [magicWandLoading, setMagicWandLoading] = useState<{ [key: number]: boolean }>({});
   
   const handleProductChange = (index: number, field: keyof Product, value: string | string[] | Specification[]) => {
     const updatedProducts = [...topPicks];
@@ -144,6 +174,53 @@ export default function InputPanel({
     if (updatedProducts[productIndex].specifications[specIndex]) {
       updatedProducts[productIndex].specifications[specIndex][field] = value;
       setTopPicks(updatedProducts);
+    }
+  };
+
+  // Magic wand function to auto-fetch first image
+  const handleMagicWand = async (productIndex: number) => {
+    const product = topPicks[productIndex];
+    
+    if (!product.name.trim()) {
+      alert("Please enter a product name first");
+      return;
+    }
+
+    if (!pexelsApiKey) {
+      alert("Please enter your Pexels API key in the Settings tab first");
+      return;
+    }
+
+    try {
+      setMagicWandLoading(prev => ({ ...prev, [product.id]: true }));
+      
+      const client = createClient(pexelsApiKey);
+      const response = await client.photos.search({
+        query: product.name,
+        per_page: 1,
+        page: 1
+      });
+      
+      // Type assertion for the response
+      const typedResponse = response as unknown as PexelsSearchResult;
+      
+      if (typedResponse.photos && typedResponse.photos.length > 0) {
+        const firstPhoto = typedResponse.photos[0];
+        handleProductChange(productIndex, 'imageUrl', firstPhoto.src.large);
+        
+        // Show success feedback
+        if (Platform.OS === "web") {
+          // Simple success indication for web
+          console.log("Image auto-populated successfully!");
+        }
+      } else {
+        alert(`No images found for "${product.name}". Try a different product name.`);
+      }
+    } catch (error) {
+      console.error("Error fetching image:", error);
+      alert("Failed to fetch image. Please check your API key and try again.");
+    } finally {
+      setMagicWandLoading(prev => ({ ...prev, [product.id]: false }));
     }
   };
 
@@ -292,6 +369,7 @@ export default function InputPanel({
               {topPicks.map((product, index) => {
                 // CRITICAL: Ensure product has specifications before rendering
                 const safeProduct = ensureSpecifications(product);
+                const isLoadingMagicWand = magicWandLoading[safeProduct.id] || false;
                 
                 return (
                   <View key={safeProduct.id} style={styles.productCard}>
@@ -326,6 +404,24 @@ export default function InputPanel({
                           onChangeText={(value) => handleProductChange(index, 'imageUrl', value)}
                           placeholder="https://example.com/image.jpg"
                         />
+                        
+                        {/* Magic Wand Button */}
+                        <TouchableOpacity 
+                          style={[
+                            styles.magicWandButton,
+                            (!pexelsApiKey || !safeProduct.name.trim() || isLoadingMagicWand) && styles.disabledMagicWandButton
+                          ]}
+                          onPress={() => handleMagicWand(index)}
+                          disabled={!pexelsApiKey || !safeProduct.name.trim() || isLoadingMagicWand}
+                        >
+                          {isLoadingMagicWand ? (
+                            <ActivityIndicator size="small" color="#ffffff" />
+                          ) : (
+                            <Wand2 size={16} color="#ffffff" />
+                          )}
+                        </TouchableOpacity>
+                        
+                        {/* Find Image Button */}
                         {onOpenImageSearch && (
                           <TouchableOpacity 
                             style={styles.findImageButton}
@@ -337,7 +433,7 @@ export default function InputPanel({
                         )}
                       </View>
                       <Text style={styles.helperText}>
-                        Use the "Find Image" button to search for free images from Pexels
+                        Use the magic wand (🪄) to auto-fetch the first image, or "Find Image" to search and choose
                       </Text>
                     </View>
                     
@@ -620,6 +716,18 @@ const styles = StyleSheet.create({
   },
   imageUrlInput: {
     flex: 1,
+  },
+  magicWandButton: {
+    backgroundColor: "#8b5cf6",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 44,
+  },
+  disabledMagicWandButton: {
+    backgroundColor: "#d1d5db",
   },
   findImageButton: {
     flexDirection: "row",
