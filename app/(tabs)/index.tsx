@@ -8,6 +8,8 @@ import { generateHtml } from "@/utils/htmlGenerator";
 import Colors from "@/constants/colors";
 import storage, { STORAGE_KEYS } from "@/utils/storage";
 import ImageSearchModal from "@/components/ImageSearchModal";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import ToastNotification from "@/components/ui/ToastNotification";
 
 // Default password for accessing the app
 const DEFAULT_PASSWORD = "Spark2025!";
@@ -108,6 +110,31 @@ export default function SiteSparkApp() {
   const [pexelsApiKey, setPexelsApiKey] = useState<string>("");
   const [isImageSearchModalVisible, setIsImageSearchModalVisible] = useState<boolean>(false);
   const [currentEditingProductId, setCurrentEditingProductId] = useState<number | null>(null);
+
+  // Confirmation modal and toast state
+  const [confirmationModal, setConfirmationModal] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: "warning" | "danger" | "info";
+    onConfirm: () => void;
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+    type: "warning",
+    onConfirm: () => {}
+  });
+
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    type: "success" | "error" | "info" | "warning";
+  }>({
+    visible: false,
+    message: "",
+    type: "success"
+  });
 
   // Check authentication on app load
   useEffect(() => {
@@ -321,37 +348,58 @@ export default function SiteSparkApp() {
       }
     } catch (error) {
       console.error("Error generating HTML:", error);
-      Alert.alert(
-        "Generation Error",
-        "Failed to generate HTML. Please try again or select a different template.",
-        [{ text: "OK" }]
-      );
+      showToast("Failed to generate HTML. Please try again.", "error");
     } finally {
       setIsGenerating(false);
     }
   };
 
-  // Reset content function
-  const handleResetContent = () => {
-    const confirmMessage = "Are you sure you want to reset all content to the default examples? This will replace your current niche title and products.";
-    
-    if (Platform.OS === "web") {
-      if (confirm(confirmMessage)) {
-        resetToDefaults();
-      }
-    } else {
-      Alert.alert(
-        "Reset Content",
-        confirmMessage,
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Reset", style: "destructive", onPress: resetToDefaults }
-        ]
-      );
-    }
+  // Show confirmation modal
+  const showConfirmationModal = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    type: "warning" | "danger" | "info" = "warning"
+  ) => {
+    setConfirmationModal({
+      visible: true,
+      title,
+      message,
+      type,
+      onConfirm
+    });
   };
 
-  const resetToDefaults = () => {
+  // Hide confirmation modal
+  const hideConfirmationModal = () => {
+    setConfirmationModal(prev => ({ ...prev, visible: false }));
+  };
+
+  // Show toast notification
+  const showToast = (message: string, type: "success" | "error" | "info" | "warning" = "success") => {
+    setToast({
+      visible: true,
+      message,
+      type
+    });
+  };
+
+  // Hide toast notification
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, visible: false }));
+  };
+
+  // Reset content function with confirmation
+  const handleResetContent = () => {
+    showConfirmationModal(
+      "Reset Content",
+      "Are you sure you want to reset all content to the default examples? This will replace your current niche title and products.",
+      confirmResetContent,
+      "warning"
+    );
+  };
+
+  const confirmResetContent = () => {
     setNicheTitle(DEFAULT_NICHE_TITLE);
     setTopPicks(DEFAULT_TOP_PICKS);
     setPrimaryColor(DEFAULT_PRIMARY_COLOR);
@@ -360,32 +408,21 @@ export default function SiteSparkApp() {
     setSelectedTemplate("classic");
     setGeneratedHtml("");
     
-    // Show confirmation
-    setSaveStatus("Content reset");
-    setTimeout(() => {
-      setSaveStatus("idle");
-    }, 2000);
+    hideConfirmationModal();
+    showToast("Content reset to default examples successfully!", "success");
   };
 
-  // Clear all data function
+  // Clear all data function with confirmation
   const handleClearData = () => {
-    if (Platform.OS === "web") {
-      if (confirm("Are you sure you want to clear all your data? This action cannot be undone.")) {
-        clearAllData();
-      }
-    } else {
-      Alert.alert(
-        "Clear All Data",
-        "Are you sure you want to clear all your data? This action cannot be undone.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Clear Data", style: "destructive", onPress: clearAllData }
-        ]
-      );
-    }
+    showConfirmationModal(
+      "Clear All Data",
+      "Are you sure you want to clear all your data? This action cannot be undone and will remove all your content, settings, and API keys.",
+      confirmClearData,
+      "danger"
+    );
   };
 
-  const clearAllData = async () => {
+  const confirmClearData = async () => {
     try {
       await storage.removeItem(STORAGE_KEYS.NICHE_TITLE);
       await storage.removeItem(STORAGE_KEYS.TOP_PICKS);
@@ -406,17 +443,12 @@ export default function SiteSparkApp() {
       setGeneratedHtml("");
       setPexelsApiKey("");
       
-      // Show confirmation
-      setSaveStatus("Data cleared");
-      setTimeout(() => {
-        setSaveStatus("idle");
-      }, 2000);
+      hideConfirmationModal();
+      showToast("All data cleared successfully!", "success");
     } catch (error) {
       console.error("Error clearing data:", error);
-      setSaveStatus("Clear failed");
-      setTimeout(() => {
-        setSaveStatus("idle");
-      }, 2000);
+      hideConfirmationModal();
+      showToast("Failed to clear data. Please try again.", "error");
     }
   };
 
@@ -432,11 +464,7 @@ export default function SiteSparkApp() {
   // Handle opening image search modal
   const handleOpenImageSearch = (productId: number) => {
     if (!pexelsApiKey) {
-      Alert.alert(
-        "Pexels API Key Required",
-        "Please enter your Pexels API key in the Settings tab to use the image search feature.",
-        [{ text: "OK" }]
-      );
+      showToast("Please enter your Pexels API key in the Settings tab to use the image search feature.", "warning");
       return;
     }
     
@@ -458,6 +486,7 @@ export default function SiteSparkApp() {
     setTopPicks(updatedProducts);
     setIsImageSearchModalVisible(false);
     setCurrentEditingProductId(null);
+    showToast("Product image updated successfully!", "success");
   };
 
   // Mobile Navigation Component
@@ -682,6 +711,24 @@ export default function SiteSparkApp() {
           }}
           onSelectImage={handleSelectImage}
           apiKey={pexelsApiKey}
+        />
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          visible={confirmationModal.visible}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          type={confirmationModal.type}
+          onConfirm={confirmationModal.onConfirm}
+          onCancel={hideConfirmationModal}
+        />
+
+        {/* Toast Notification */}
+        <ToastNotification
+          visible={toast.visible}
+          message={toast.message}
+          type={toast.type}
+          onHide={hideToast}
         />
       </View>
     </>
