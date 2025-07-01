@@ -116,7 +116,7 @@ export default function InputPanel({
   const [activeView, setActiveView] = useState<'editor' | 'settings'>('editor');
   const [magicWandLoading, setMagicWandLoading] = useState<{ [key: number]: boolean }>({});
   
-  // Import the new action from the store
+  // Import the global action from the store
   const updateSpecificationInclude = useAppStore((state) => state.updateSpecificationInclude);
   
   const handleProductChange = (index: number, field: keyof Product, value: string | string[] | Specification[]) => {
