@@ -19,7 +19,9 @@ const DEFAULT_NICHE_TITLE = "Best Laptops of 2025";
 const DEFAULT_PRIMARY_COLOR = "#4f46e5";
 const DEFAULT_SECONDARY_COLOR = "#10b981";
 const DEFAULT_INCLUDE_BRANDING = true;
-const DEFAULT_TOP_PICKS: Product[] = [
+
+// Raw product data without functions
+const DEFAULT_TOP_PICKS_RAW = [
   {
     id: 1,
     name: "MacBook Pro M3",
@@ -73,6 +75,19 @@ const DEFAULT_TOP_PICKS: Product[] = [
   }
 ];
 
+// Function to create products with proper specification functions
+const createProductsWithFunctions = (rawProducts: any[], updateSpecificationCallback: (productId: number, specId: number, updates: Partial<Specification>) => void): Product[] => {
+  return rawProducts.map(product => ({
+    ...product,
+    specifications: product.specifications.map((spec: any) => ({
+      ...spec,
+      onIncludeChange: (include: boolean) => {
+        updateSpecificationCallback(product.id, spec.id, { include });
+      }
+    }))
+  }));
+};
+
 // Helper function to ensure product has specifications array with include property
 const ensureProductSpecifications = (product: any): Product => ({
   ...product,
@@ -101,7 +116,7 @@ export default function SiteSparkApp() {
 
   // App state - using default constants
   const [nicheTitle, setNicheTitle] = useState<string>(DEFAULT_NICHE_TITLE);
-  const [topPicks, setTopPicks] = useState<Product[]>(DEFAULT_TOP_PICKS);
+  const [topPicks, setTopPicks] = useState<Product[]>([]);
   const [primaryColor, setPrimaryColor] = useState<string>(DEFAULT_PRIMARY_COLOR);
   const [secondaryColor, setSecondaryColor] = useState<string>(DEFAULT_SECONDARY_COLOR);
   const [includeBranding, setIncludeBranding] = useState<boolean>(DEFAULT_INCLUDE_BRANDING);
@@ -140,6 +155,31 @@ export default function SiteSparkApp() {
     message: "",
     type: "success"
   });
+
+  // Function to update a specification - this will be passed to the product creation function
+  const updateSpecification = (productId: number, specId: number, updates: Partial<Specification>) => {
+    const updatedProducts = topPicks.map(product => {
+      if (product.id === productId) {
+        return {
+          ...product,
+          specifications: product.specifications.map(spec => {
+            if (spec.id === specId) {
+              return { ...spec, ...updates };
+            }
+            return spec;
+          })
+        };
+      }
+      return product;
+    });
+    
+    setTopPicks(updatedProducts);
+  };
+
+  // Initialize default products with proper functions
+  const initializeDefaultProducts = () => {
+    return createProductsWithFunctions(DEFAULT_TOP_PICKS_RAW, updateSpecification);
+  };
 
   // Check authentication on app load
   useEffect(() => {
@@ -188,7 +228,12 @@ export default function SiteSparkApp() {
           const parsedTopPicks = JSON.parse(savedTopPicks);
           // CRITICAL: Ensure specifications exist for all products and have include property
           const updatedTopPicks = parsedTopPicks.map(ensureProductSpecifications);
-          setTopPicks(updatedTopPicks);
+          // Create products with proper functions
+          const productsWithFunctions = createProductsWithFunctions(updatedTopPicks, updateSpecification);
+          setTopPicks(productsWithFunctions);
+        } else {
+          // Initialize with default products if no saved data
+          setTopPicks(initializeDefaultProducts());
         }
         
         // Load primary color
@@ -222,6 +267,8 @@ export default function SiteSparkApp() {
         }
       } catch (error) {
         console.error("Error loading saved data:", error);
+        // If loading fails, initialize with default products
+        setTopPicks(initializeDefaultProducts());
       } finally {
         setIsLoading(false);
       }
@@ -242,8 +289,18 @@ export default function SiteSparkApp() {
         // Save niche title
         await storage.setItem(STORAGE_KEYS.NICHE_TITLE, nicheTitle);
         
-        // Save top picks
-        await storage.setItem(STORAGE_KEYS.TOP_PICKS, JSON.stringify(topPicks));
+        // Save top picks (without functions for serialization)
+        const topPicksForStorage = topPicks.map(product => ({
+          ...product,
+          specifications: product.specifications.map(spec => ({
+            id: spec.id,
+            key: spec.key,
+            value: spec.value,
+            include: spec.include
+            // Don't save the onIncludeChange function
+          }))
+        }));
+        await storage.setItem(STORAGE_KEYS.TOP_PICKS, JSON.stringify(topPicksForStorage));
         
         // Save primary color
         await storage.setItem(STORAGE_KEYS.PRIMARY_COLOR, primaryColor);
@@ -365,26 +422,6 @@ export default function SiteSparkApp() {
     setTopPicks(updatedProducts);
   };
 
-  // Function to update a specification
-  const updateSpecification = (productId: number, specId: number, updates: Partial<Specification>) => {
-    const updatedProducts = topPicks.map(product => {
-      if (product.id === productId) {
-        return {
-          ...product,
-          specifications: product.specifications.map(spec => {
-            if (spec.id === specId) {
-              return { ...spec, ...updates };
-            }
-            return spec;
-          })
-        };
-      }
-      return product;
-    });
-    
-    setTopPicks(updatedProducts);
-  };
-
   // Generate HTML function (now async)
   const handleGenerateHtml = async () => {
     try {
@@ -451,7 +488,7 @@ export default function SiteSparkApp() {
 
   const confirmResetContent = () => {
     setNicheTitle(DEFAULT_NICHE_TITLE);
-    setTopPicks(DEFAULT_TOP_PICKS);
+    setTopPicks(initializeDefaultProducts()); // Use the function to create products with proper functions
     setPrimaryColor(DEFAULT_PRIMARY_COLOR);
     setSecondaryColor(DEFAULT_SECONDARY_COLOR);
     setIncludeBranding(DEFAULT_INCLUDE_BRANDING);
@@ -485,7 +522,7 @@ export default function SiteSparkApp() {
       
       // Reset state to defaults
       setNicheTitle(DEFAULT_NICHE_TITLE);
-      setTopPicks(DEFAULT_TOP_PICKS);
+      setTopPicks(initializeDefaultProducts()); // Use the function to create products with proper functions
       setPrimaryColor(DEFAULT_PRIMARY_COLOR);
       setSecondaryColor(DEFAULT_SECONDARY_COLOR);
       setIncludeBranding(DEFAULT_INCLUDE_BRANDING);
@@ -504,8 +541,10 @@ export default function SiteSparkApp() {
 
   // Check if current content matches defaults
   const isContentDefault = () => {
+    const defaultProducts = initializeDefaultProducts();
     return nicheTitle === DEFAULT_NICHE_TITLE && 
-           JSON.stringify(topPicks) === JSON.stringify(DEFAULT_TOP_PICKS) &&
+           JSON.stringify(topPicks.map(p => ({ ...p, specifications: p.specifications.map(s => ({ id: s.id, key: s.key, value: s.value, include: s.include })) }))) === 
+           JSON.stringify(defaultProducts.map(p => ({ ...p, specifications: p.specifications.map(s => ({ id: s.id, key: s.key, value: s.value, include: s.include })) }))) &&
            primaryColor === DEFAULT_PRIMARY_COLOR &&
            secondaryColor === DEFAULT_SECONDARY_COLOR &&
            includeBranding === DEFAULT_INCLUDE_BRANDING;
