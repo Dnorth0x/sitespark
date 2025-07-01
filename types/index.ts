@@ -3,7 +3,6 @@ export interface Specification {
   key: string;
   value: string;
   include: boolean;
-  onIncludeChange?: (include: boolean) => void;
 }
 
 export interface Product {

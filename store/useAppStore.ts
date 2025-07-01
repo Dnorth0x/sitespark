@@ -11,7 +11,7 @@ const DEFAULT_SECONDARY_COLOR = "#10b981";
 const DEFAULT_INCLUDE_BRANDING = true;
 const DEFAULT_PASSWORD = "Spark2025!";
 
-// Raw product data without functions
+// Raw product data
 const DEFAULT_TOP_PICKS_RAW = [
   {
     id: 1,
@@ -106,6 +106,7 @@ interface AppState {
   addSpecification: (productId: number) => void;
   removeSpecification: (productIndex: number, specIndex: number) => void;
   updateSpecification: (productId: number, specId: number, updates: Partial<Specification>) => void;
+  updateSpecificationInclude: (productId: number, specId: number, include: boolean) => void;
   
   // Modal and toast management
   openResetModal: () => void;
@@ -113,23 +114,7 @@ interface AppState {
   confirmReset: () => void;
   showSuccessToast: () => void;
   hideSuccessToast: () => void;
-  
-  // Helper function for specification updates
-  _updateSpecInclude: (productId: number, specId: number, include: boolean) => void;
 }
-
-// Helper function to create products with proper specification functions
-const createProductsWithFunctions = (rawProducts: any[], updateSpecificationCallback: (productId: number, specId: number, updates: Partial<Specification>) => void): Product[] => {
-  return rawProducts.map(product => ({
-    ...product,
-    specifications: product.specifications.map((spec: any) => ({
-      ...spec,
-      onIncludeChange: (include: boolean) => {
-        updateSpecificationCallback(product.id, spec.id, { include });
-      }
-    }))
-  }));
-};
 
 // Helper function to ensure product has specifications array with include property
 const ensureProductSpecifications = (product: any): Product => ({
@@ -145,7 +130,7 @@ const ensureProductSpecifications = (product: any): Product => ({
 const getInitialState = () => {
   return {
     nicheTitle: DEFAULT_NICHE_TITLE,
-    products: [],
+    products: DEFAULT_TOP_PICKS_RAW.map(ensureProductSpecifications),
     primaryColor: DEFAULT_PRIMARY_COLOR,
     secondaryColor: DEFAULT_SECONDARY_COLOR,
     includeBranding: DEFAULT_INCLUDE_BRANDING,
@@ -164,25 +149,6 @@ const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       ...getInitialState(),
-      
-      // Initialize products with proper functions
-      products: createProductsWithFunctions(DEFAULT_TOP_PICKS_RAW, (productId: number, specId: number, updates: Partial<Specification>) => {
-        get().updateSpecification(productId, specId, updates);
-      }),
-
-      // 1. THE NEW HELPER FUNCTION IS ADDED HERE, inside the main store body
-      _updateSpecInclude: (productId: number, specId: number, include: boolean) => {
-        set(state => {
-          const product = state.products.find(p => p.id === productId);
-          if (product) {
-            const spec = product.specifications.find(s => s.id === specId);
-            if (spec) {
-              spec.include = include;
-            }
-          }
-          return { products: [...state.products] };
-        });
-      },
 
       // Basic setters
       setNicheTitle: (title: string) => set({ nicheTitle: title }),
@@ -252,9 +218,6 @@ const useAppStore = create<AppState>()(
           key: "",
           value: "",
           include: true,
-          onIncludeChange: (include: boolean) => {
-            get()._updateSpecInclude(productId, newSpecification.id, include);
-          }
         };
         
         set(state => {
@@ -300,23 +263,42 @@ const useAppStore = create<AppState>()(
         });
       },
 
+      // Public action for updating specification include status
+      updateSpecificationInclude: (productId: number, specId: number, include: boolean) => {
+        set(state => {
+          const updatedProducts = state.products.map(product => {
+            if (product.id === productId) {
+              return {
+                ...product,
+                specifications: product.specifications.map(spec => {
+                  if (spec.id === specId) {
+                    return { ...spec, include };
+                  }
+                  return spec;
+                })
+              };
+            }
+            return product;
+          });
+          return { products: updatedProducts };
+        });
+      },
+
       // Modal and toast management
       openResetModal: () => set({ isResetModalOpen: true }),
       closeResetModal: () => set({ isResetModalOpen: false }),
       
       confirmReset: () => {
-        const initialProducts = createProductsWithFunctions(DEFAULT_TOP_PICKS_RAW, (productId: number, specId: number, updates: Partial<Specification>) => {
-          get().updateSpecification(productId, specId, updates);
-        });
+        const initialState = getInitialState();
         
         set({
-          nicheTitle: DEFAULT_NICHE_TITLE,
-          products: initialProducts,
-          primaryColor: DEFAULT_PRIMARY_COLOR,
-          secondaryColor: DEFAULT_SECONDARY_COLOR,
-          includeBranding: DEFAULT_INCLUDE_BRANDING,
-          selectedTemplate: "classic",
-          generatedHtml: "",
+          nicheTitle: initialState.nicheTitle,
+          products: initialState.products,
+          primaryColor: initialState.primaryColor,
+          secondaryColor: initialState.secondaryColor,
+          includeBranding: initialState.includeBranding,
+          selectedTemplate: initialState.selectedTemplate,
+          generatedHtml: initialState.generatedHtml,
           isResetModalOpen: false,
           showResetSuccessToast: true,
         });
@@ -325,48 +307,13 @@ const useAppStore = create<AppState>()(
       showSuccessToast: () => set({ showResetSuccessToast: true }),
       hideSuccessToast: () => set({ showResetSuccessToast: false }),
     }),
-    // 2. THE PERSIST CONFIGURATION IS UPDATED HERE
     {
       name: 'site-spark-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 1, // Set the new version to 1. The old, broken state is version 0.
-      migrate: (persistedState: any, version: number) => {
-        if (version === 0) {
-          // If the loaded data is the old version, we repair it.
-          const repairedProducts = persistedState.products.map((product: any) => {
-            const ensuredProduct = ensureProductSpecifications(product);
-            return {
-              ...ensuredProduct,
-              specifications: ensuredProduct.specifications.map((spec: any) => {
-                // If the function already exists for some reason, skip.
-                if (spec.onIncludeChange) return spec;
-                // Otherwise, inject the function, making sure it calls the new helper.
-                return {
-                  ...spec,
-                  onIncludeChange: (include: boolean) => {
-                    useAppStore.getState()._updateSpecInclude(product.id, spec.id, include);
-                  },
-                };
-              }),
-            };
-          });
-          persistedState.products = repairedProducts;
-        }
-        return persistedState;
-      },
       // Only persist certain fields, not UI state
       partialize: (state) => ({
         nicheTitle: state.nicheTitle,
-        products: state.products.map(product => ({
-          ...product,
-          specifications: product.specifications.map(spec => ({
-            id: spec.id,
-            key: spec.key,
-            value: spec.value,
-            include: spec.include
-            // Don't persist the onIncludeChange function
-          }))
-        })),
+        products: state.products,
         primaryColor: state.primaryColor,
         secondaryColor: state.secondaryColor,
         includeBranding: state.includeBranding,

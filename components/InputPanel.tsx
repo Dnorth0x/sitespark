@@ -6,6 +6,7 @@ import { Plus, X, Search, Image, Edit3, Settings, Wand2, Check } from "lucide-re
 import SettingsPanel from "@/components/SettingsPanel";
 import Actions from "@/components/Actions";
 import { createClient } from "pexels";
+import useAppStore from "@/store/useAppStore";
 
 interface InputPanelProps {
   nicheTitle: string;
@@ -115,6 +116,9 @@ export default function InputPanel({
   const [activeView, setActiveView] = useState<'editor' | 'settings'>('editor');
   const [magicWandLoading, setMagicWandLoading] = useState<{ [key: number]: boolean }>({});
   
+  // Import the new action from the store
+  const updateSpecificationInclude = useAppStore((state) => state.updateSpecificationInclude);
+  
   const handleProductChange = (index: number, field: keyof Product, value: string | string[] | Specification[]) => {
     onUpdateProduct(index, field, value);
   };
@@ -139,16 +143,6 @@ export default function InputPanel({
     
     if (spec && onUpdateSpecification) {
       onUpdateSpecification(product.id, spec.id, { [field]: value });
-    }
-  };
-
-  // Handle specification include/exclude toggle
-  const handleSpecificationIncludeChange = (productIndex: number, specIndex: number, include: boolean) => {
-    const product = topPicks[productIndex];
-    const spec = product.specifications[specIndex];
-    
-    if (spec && onUpdateSpecification) {
-      onUpdateSpecification(product.id, spec.id, { include });
     }
   };
 
@@ -491,7 +485,7 @@ export default function InputPanel({
                                 styles.includeToggle,
                                 spec.include && styles.includeToggleActive
                               ]}
-                              onPress={() => handleSpecificationIncludeChange(index, specIndex, !spec.include)}
+                              onPress={() => updateSpecificationInclude(safeProduct.id, spec.id, !spec.include)}
                             >
                               {spec.include && <Check size={12} color="#ffffff" />}
                             </TouchableOpacity>
