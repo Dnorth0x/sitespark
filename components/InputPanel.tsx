@@ -279,92 +279,110 @@ export default function InputPanel({
       {activeView === 'editor' ? (
         <>
           <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
-            <Text style={styles.mainHeading}>SiteSpark: Your Niche Site Generator</Text>
-            
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Niche Title</Text>
-              <TextInput
-                style={styles.input}
-                value={nicheTitle}
-                onChangeText={setNicheTitle}
-                placeholder="Enter your niche title (e.g., Best Laptops of 2025)"
-              />
+            {/* App Header with Tagline */}
+            <View style={styles.appHeader}>
+              <Text style={styles.mainHeading}>SiteSpark</Text>
+              <Text style={styles.tagline}>Your AI-Powered Niche Website Generator</Text>
+              
+              {/* Autosave Indicator */}
+              <View style={styles.autosaveIndicator}>
+                <View style={styles.checkmarkContainer}>
+                  <Check size={14} color={Colors.light.success} />
+                </View>
+                <Text style={styles.autosaveText}>All changes saved</Text>
+              </View>
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Color Customization</Text>
+            {/* 1. Site Settings Section */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionHeading}>1. Site Settings</Text>
               
-              <View style={styles.colorRow}>
-                <View style={styles.colorGroup}>
-                  <Text style={styles.colorLabel}>Primary Color</Text>
-                  <View style={styles.colorPickerContainer}>
-                    {Platform.OS === "web" ? (
-                      <input
-                        type="color"
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Niche Title</Text>
+                <TextInput
+                  style={styles.input}
+                  value={nicheTitle}
+                  onChangeText={setNicheTitle}
+                  placeholder="Enter your niche title (e.g., Best Laptops of 2025)"
+                />
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Color Customization</Text>
+                
+                <View style={styles.colorRow}>
+                  <View style={styles.colorGroup}>
+                    <Text style={styles.colorLabel}>Primary Color</Text>
+                    <View style={styles.colorPickerContainer}>
+                      {Platform.OS === "web" ? (
+                        <input
+                          type="color"
+                          value={primaryColor}
+                          onChange={(e) => setPrimaryColor(e.target.value)}
+                          style={{
+                            width: 60,
+                            height: 40,
+                            border: "1px solid #d1d5db",
+                            borderRadius: 6,
+                            cursor: "pointer",
+                            backgroundColor: "transparent"
+                          }}
+                        />
+                      ) : (
+                        <View style={[styles.colorPreview, { backgroundColor: primaryColor }]} />
+                      )}
+                      <TextInput
+                        style={[styles.input, { flex: 1 }]}
                         value={primaryColor}
-                        onChange={(e) => setPrimaryColor(e.target.value)}
-                        style={{
-                          width: 60,
-                          height: 40,
-                          border: "1px solid #d1d5db",
-                          borderRadius: 6,
-                          cursor: "pointer",
-                          backgroundColor: "transparent"
-                        }}
+                        onChangeText={setPrimaryColor}
+                        placeholder="#4f46e5"
                       />
-                    ) : (
-                      <View style={[styles.colorPreview, { backgroundColor: primaryColor }]} />
-                    )}
-                    <TextInput
-                      style={[styles.input, { flex: 1 }]}
-                      value={primaryColor}
-                      onChangeText={setPrimaryColor}
-                      placeholder="#4f46e5"
-                    />
+                    </View>
+                  </View>
+                  
+                  <View style={styles.colorGroup}>
+                    <Text style={styles.colorLabel}>Secondary Color</Text>
+                    <View style={styles.colorPickerContainer}>
+                      {Platform.OS === "web" ? (
+                        <input
+                          type="color"
+                          value={secondaryColor}
+                          onChange={(e) => setSecondaryColor(e.target.value)}
+                          style={{
+                            width: 60,
+                            height: 40,
+                            border: "1px solid #d1d5db",
+                            borderRadius: 6,
+                            cursor: "pointer",
+                            backgroundColor: "transparent"
+                          }}
+                        />
+                      ) : (
+                        <View style={[styles.colorPreview, { backgroundColor: secondaryColor }]} />
+                      )}
+                      <TextInput
+                        style={[styles.input, { flex: 1 }]}
+                        value={secondaryColor}
+                        onChangeText={setSecondaryColor}
+                        placeholder="#10b981"
+                      />
+                    </View>
                   </View>
                 </View>
                 
-                <View style={styles.colorGroup}>
-                  <Text style={styles.colorLabel}>Secondary Color</Text>
-                  <View style={styles.colorPickerContainer}>
-                    {Platform.OS === "web" ? (
-                      <input
-                        type="color"
-                        value={secondaryColor}
-                        onChange={(e) => setSecondaryColor(e.target.value)}
-                        style={{
-                          width: 60,
-                          height: 40,
-                          border: "1px solid #d1d5db",
-                          borderRadius: 6,
-                          cursor: "pointer",
-                          backgroundColor: "transparent"
-                        }}
-                      />
-                    ) : (
-                      <View style={[styles.colorPreview, { backgroundColor: secondaryColor }]} />
-                    )}
-                    <TextInput
-                      style={[styles.input, { flex: 1 }]}
-                      value={secondaryColor}
-                      onChangeText={setSecondaryColor}
-                      placeholder="#10b981"
-                    />
-                  </View>
-                </View>
+                <Text style={styles.helperText}>
+                  {Platform.OS === "web" 
+                    ? "Use the color picker or enter hex color codes. Primary color is used for buttons, secondary for hero section." 
+                    : "Enter hex color codes (e.g., #4f46e5). Primary color is used for buttons, secondary for hero section."
+                  }
+                </Text>
               </View>
-              
-              <Text style={styles.helperText}>
-                {Platform.OS === "web" 
-                  ? "Use the color picker or enter hex color codes. Primary color is used for buttons, secondary for hero section." 
-                  : "Enter hex color codes (e.g., #4f46e5). Primary color is used for buttons, secondary for hero section."
-                }
-              </Text>
             </View>
             
-            <View style={styles.section}>
+            {/* 2. Product Details Section */}
+            <View style={styles.sectionContainer}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Products ({topPicks.length})</Text>
+                <Text style={styles.sectionHeading}>2. Product Details</Text>
                 <TouchableOpacity style={styles.addButton} onPress={addProduct}>
                   <Plus size={16} color="#ffffff" />
                   <Text style={styles.addButtonText}>Add Product</Text>
@@ -629,26 +647,80 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.light.text,
   },
+  appHeader: {
+    alignItems: "center",
+    marginBottom: 32,
+    paddingVertical: 20,
+  },
   mainHeading: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: "700",
-    marginBottom: 20,
     color: Colors.light.text,
+    marginBottom: 8,
+  },
+  tagline: {
+    fontSize: 16,
+    color: "#6b7280",
+    marginBottom: 16,
     textAlign: "center",
   },
-  section: {
+  autosaveIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0fdf4",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+    gap: 6,
+  },
+  checkmarkContainer: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#dcfce7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  autosaveText: {
+    fontSize: 14,
+    color: Colors.light.success,
+    fontWeight: "500",
+  },
+  sectionContainer: {
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 20,
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  sectionHeading: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: Colors.light.text,
+    marginBottom: 16,
+  },
+  section: {
+    marginBottom: 20,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "600",
     color: Colors.light.text,
+    marginBottom: 8,
   },
   addButton: {
     flexDirection: "row",

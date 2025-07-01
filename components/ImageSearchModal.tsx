@@ -52,9 +52,9 @@ interface ImageSearchModalProps {
   apiKey: string;
 }
 
-const { width } = Dimensions.get("window");
-const numColumns = width > 768 ? 3 : 2;
-const itemWidth = width / numColumns - 16;
+const { width, height } = Dimensions.get("window");
+const numColumns = width > 768 ? 4 : 2;
+const itemWidth = (width * 0.9) / numColumns - 16;
 
 export default function ImageSearchModal({
   visible,
@@ -174,6 +174,7 @@ export default function ImageSearchModal({
         <View style={styles.emptyStateContainer}>
           <ActivityIndicator size="large" color={Colors.light.primary} />
           <Text style={styles.emptyStateText}>Searching for images...</Text>
+          <Text style={styles.loadingSubtext}>Finding the perfect images for your site</Text>
         </View>
       );
     }
@@ -188,7 +189,8 @@ export default function ImageSearchModal({
 
     return (
       <View style={styles.emptyStateContainer}>
-        <Text style={styles.emptyStateText}>No images found. Try a different search term.</Text>
+        <Text style={styles.emptyStateText}>No images found</Text>
+        <Text style={styles.emptySubtext}>Try a different search term or check your spelling</Text>
       </View>
     );
   };
@@ -199,6 +201,7 @@ export default function ImageSearchModal({
     return (
       <View style={styles.footerLoader}>
         <ActivityIndicator size="small" color={Colors.light.primary} />
+        <Text style={styles.loadingMoreText}>Loading more images...</Text>
       </View>
     );
   };
@@ -209,49 +212,56 @@ export default function ImageSearchModal({
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
-      <View style={styles.header}>
-        <Text style={styles.title}>Search Images</Text>
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <X size={24} color={Colors.light.text} />
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Search size={20} color="#9ca3af" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search for images..."
-            placeholderTextColor="#9ca3af"
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="search"
-            onSubmitEditing={() => fetchPhotos(searchQuery, 1)}
+      {/* Large Modal Container */}
+      <View style={styles.modalContainer}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Search Images</Text>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <X size={24} color={Colors.light.text} />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputContainer}>
+            <Search size={20} color="#9ca3af" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search for images..."
+              placeholderTextColor="#9ca3af"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+              onSubmitEditing={() => fetchPhotos(searchQuery, 1)}
+            />
+          </View>
+        </View>
+        
+        {/* Scrollable Image Grid Container */}
+        <View style={styles.imageGridContainer}>
+          <FlatList
+            data={photos}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+            numColumns={numColumns}
+            contentContainerStyle={styles.imageGrid}
+            ListEmptyComponent={renderEmptyState}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={renderFooter}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+            showsVerticalScrollIndicator={true}
           />
         </View>
-      </View>
-      
-      <FlatList
-        data={photos}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={numColumns}
-        contentContainerStyle={styles.imageGrid}
-        ListEmptyComponent={renderEmptyState}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={renderFooter}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={10}
-      />
-      
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          Images provided by <Text style={styles.pexelsText}>Pexels</Text>
-        </Text>
+        
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            Images provided by <Text style={styles.pexelsText}>Pexels</Text>
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -260,28 +270,46 @@ export default function ImageSearchModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContainer: {
+    height: height * 0.8, // 80vh equivalent
+    width: width * 0.9, // 90vw equivalent
+    maxWidth: 1200, // max-w-6xl equivalent
     backgroundColor: Colors.light.background,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 16,
+    flexDirection: "column", // flex flex-col
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.border,
     backgroundColor: Colors.light.card,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "700",
     color: Colors.light.text,
   },
   closeButton: {
     padding: 4,
   },
   searchContainer: {
-    padding: 16,
+    padding: 20,
     backgroundColor: Colors.light.card,
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.border,
@@ -290,30 +318,39 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f3f4f6",
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 48,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
-    height: 44,
     fontSize: 16,
     color: Colors.light.text,
   },
+  imageGridContainer: {
+    flex: 1, // flex-1
+    backgroundColor: Colors.light.background,
+  },
   imageGrid: {
-    padding: 8,
-    paddingBottom: 80, // Extra padding at bottom for footer
+    padding: 12,
+    paddingBottom: 20,
   },
   imageItem: {
-    margin: 8,
+    margin: 6,
     width: itemWidth,
     height: itemWidth,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: "hidden",
     backgroundColor: "#f3f4f6",
     position: "relative",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   thumbnail: {
     width: "100%",
@@ -324,8 +361,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    padding: 6,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    padding: 8,
   },
   photographerText: {
     color: "#ffffff",
@@ -333,35 +370,55 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   emptyStateContainer: {
-    padding: 40,
+    padding: 60,
     alignItems: "center",
     justifyContent: "center",
+    minHeight: 300,
   },
   emptyStateText: {
-    fontSize: 16,
-    color: "#6b7280",
+    fontSize: 18,
+    color: "#374151",
     textAlign: "center",
     marginTop: 16,
+    fontWeight: "600",
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#6b7280",
+    textAlign: "center",
+    marginTop: 8,
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    color: "#6b7280",
+    textAlign: "center",
+    marginTop: 8,
+    fontStyle: "italic",
   },
   errorText: {
     fontSize: 16,
     color: Colors.light.error,
     textAlign: "center",
+    lineHeight: 24,
   },
   footerLoader: {
-    paddingVertical: 20,
+    paddingVertical: 24,
     alignItems: "center",
+    gap: 8,
+  },
+  loadingMoreText: {
+    fontSize: 14,
+    color: "#6b7280",
+    fontWeight: "500",
   },
   footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: 16,
     backgroundColor: Colors.light.card,
     borderTopWidth: 1,
     borderTopColor: Colors.light.border,
     alignItems: "center",
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
   },
   footerText: {
     fontSize: 14,
