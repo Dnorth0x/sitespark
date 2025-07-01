@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, StyleSheet, ScrollView, ActivityIndicator, Platform, TouchableOpacity, Switch } from "react-native";
 import { Product, Specification } from "@/types";
 import Colors from "@/constants/colors";
-import { Plus, X, Search, Image, Edit3, Settings, Wand2 } from "lucide-react-native";
+import { Plus, X, Search, Image, Edit3, Settings, Wand2, Check } from "lucide-react-native";
 import SettingsPanel from "@/components/SettingsPanel";
 import Actions from "@/components/Actions";
 import { createClient } from "pexels";
@@ -32,12 +32,19 @@ interface InputPanelProps {
   selectedTemplate: string;
   setSelectedTemplate: (template: string) => void;
   isGenerating?: boolean;
+  onAddSpecification: (productId: number) => void;
+  onUpdateSpecification: (productId: number, specId: number, updates: Partial<Specification>) => void;
 }
 
-// Helper function to ensure specifications array exists
+// Helper function to ensure specifications array exists with include property
 const ensureSpecifications = (product: Product): Product => ({
   ...product,
-  specifications: Array.isArray(product.specifications) ? product.specifications : []
+  specifications: Array.isArray(product.specifications) 
+    ? product.specifications.map(spec => ({
+        ...spec,
+        include: spec.include !== undefined ? spec.include : true
+      }))
+    : []
 });
 
 // Types for Pexels API responses
@@ -92,7 +99,9 @@ export default function InputPanel({
   saveStatus,
   selectedTemplate,
   setSelectedTemplate,
-  isGenerating = false
+  isGenerating = false,
+  onAddSpecification,
+  onUpdateSpecification
 }: InputPanelProps) {
   
   const [activeView, setActiveView] = useState<'editor' | 'settings'>('editor');
@@ -144,20 +153,6 @@ export default function InputPanel({
     }
   };
 
-  const addSpecification = (productIndex: number) => {
-    const newSpec: Specification = {
-      id: Date.now(),
-      key: "",
-      value: ""
-    };
-    
-    const updatedProducts = [...topPicks];
-    // CRITICAL: Ensure specifications array exists before adding to it
-    updatedProducts[productIndex] = ensureSpecifications(updatedProducts[productIndex]);
-    updatedProducts[productIndex].specifications.push(newSpec);
-    setTopPicks(updatedProducts);
-  };
-
   const removeSpecification = (productIndex: number, specIndex: number) => {
     const updatedProducts = [...topPicks];
     // CRITICAL: Ensure specifications array exists before filtering
@@ -174,6 +169,16 @@ export default function InputPanel({
     if (updatedProducts[productIndex].specifications[specIndex]) {
       updatedProducts[productIndex].specifications[specIndex][field] = value;
       setTopPicks(updatedProducts);
+    }
+  };
+
+  // Handle specification include/exclude toggle
+  const handleSpecificationIncludeChange = (productIndex: number, specIndex: number, include: boolean) => {
+    const product = topPicks[productIndex];
+    const spec = product.specifications[specIndex];
+    
+    if (spec && onUpdateSpecification) {
+      onUpdateSpecification(product.id, spec.id, { include });
     }
   };
 
@@ -482,7 +487,7 @@ export default function InputPanel({
                         <Text style={styles.label}>Specifications</Text>
                         <TouchableOpacity 
                           style={styles.addSpecButton} 
-                          onPress={() => addSpecification(index)}
+                          onPress={() => onAddSpecification(safeProduct.id)}
                         >
                           <Plus size={14} color="#ffffff" />
                           <Text style={styles.addSpecButtonText}>Add Spec</Text>
@@ -492,17 +497,38 @@ export default function InputPanel({
                       {/* CRITICAL: Use safeProduct.specifications which is guaranteed to be an array */}
                       {safeProduct.specifications.map((spec, specIndex) => (
                         <View key={spec.id} style={styles.specificationRow}>
+                          <View style={styles.specificationToggle}>
+                            <TouchableOpacity
+                              style={[
+                                styles.includeToggle,
+                                spec.include && styles.includeToggleActive
+                              ]}
+                              onPress={() => handleSpecificationIncludeChange(index, specIndex, !spec.include)}
+                            >
+                              {spec.include && <Check size={12} color="#ffffff" />}
+                            </TouchableOpacity>
+                          </View>
                           <TextInput
-                            style={[styles.input, styles.specKeyInput]}
+                            style={[
+                              styles.input, 
+                              styles.specKeyInput,
+                              !spec.include && styles.disabledInput
+                            ]}
                             value={spec.key}
                             onChangeText={(value) => handleSpecificationChange(index, specIndex, 'key', value)}
                             placeholder="Key (e.g., Processor)"
+                            editable={spec.include}
                           />
                           <TextInput
-                            style={[styles.input, styles.specValueInput]}
+                            style={[
+                              styles.input, 
+                              styles.specValueInput,
+                              !spec.include && styles.disabledInput
+                            ]}
                             value={spec.value}
                             onChangeText={(value) => handleSpecificationChange(index, specIndex, 'value', value)}
                             placeholder="Value (e.g., Intel i7)"
+                            editable={spec.include}
                           />
                           <TouchableOpacity 
                             style={styles.removeSpecButton} 
@@ -709,6 +735,10 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 14,
   },
+  disabledInput: {
+    backgroundColor: "#f3f4f6",
+    color: "#9ca3af",
+  },
   imageUrlContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -768,6 +798,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     marginBottom: 8,
+  },
+  specificationToggle: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  includeToggle: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: "#d1d5db",
+    backgroundColor: "#ffffff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  includeToggleActive: {
+    backgroundColor: "#10b981",
+    borderColor: "#10b981",
   },
   specKeyInput: {
     flex: 1,

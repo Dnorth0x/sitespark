@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Platform, useWindowDimensions, Alert, Text, TextInput, TouchableOpacity, ActivityIndicator, Modal } from "react-native";
 import { Stack } from "expo-router";
-import { Product } from "@/types";
+import { Product, Specification } from "@/types";
 import InputPanel from "@/components/InputPanel";
 import PreviewPanel from "@/components/PreviewPanel";
 import { generateHtml } from "@/utils/htmlGenerator";
@@ -29,12 +29,12 @@ const DEFAULT_TOP_PICKS: Product[] = [
     cons: ["Expensive", "Limited ports", "Not easily upgradable"],
     affiliateLink: "https://amazon.com/macbook-pro",
     specifications: [
-      { id: 1, key: "Processor", value: "Apple M3 Pro 12-core CPU" },
-      { id: 2, key: "Memory", value: "18GB Unified Memory" },
-      { id: 3, key: "Storage", value: "512GB SSD" },
-      { id: 4, key: "Display", value: "14.2-inch Liquid Retina XDR" },
-      { id: 5, key: "Battery Life", value: "Up to 18 hours" },
-      { id: 6, key: "Weight", value: "3.5 lbs (1.6 kg)" }
+      { id: 1, key: "Processor", value: "Apple M3 Pro 12-core CPU", include: true },
+      { id: 2, key: "Memory", value: "18GB Unified Memory", include: true },
+      { id: 3, key: "Storage", value: "512GB SSD", include: true },
+      { id: 4, key: "Display", value: "14.2-inch Liquid Retina XDR", include: true },
+      { id: 5, key: "Battery Life", value: "Up to 18 hours", include: true },
+      { id: 6, key: "Weight", value: "3.5 lbs (1.6 kg)", include: true }
     ]
   },
   {
@@ -46,12 +46,12 @@ const DEFAULT_TOP_PICKS: Product[] = [
     cons: ["Limited port selection", "Average battery life", "Can get warm under load"],
     affiliateLink: "https://amazon.com/dell-xps-13",
     specifications: [
-      { id: 1, key: "Processor", value: "Intel Core i7-1360P" },
-      { id: 2, key: "Memory", value: "16GB LPDDR5" },
-      { id: 3, key: "Storage", value: "512GB PCIe SSD" },
-      { id: 4, key: "Display", value: "13.4-inch 4K OLED" },
-      { id: 5, key: "Battery Life", value: "Up to 12 hours" },
-      { id: 6, key: "Weight", value: "2.73 lbs (1.24 kg)" }
+      { id: 1, key: "Processor", value: "Intel Core i7-1360P", include: true },
+      { id: 2, key: "Memory", value: "16GB LPDDR5", include: true },
+      { id: 3, key: "Storage", value: "512GB PCIe SSD", include: true },
+      { id: 4, key: "Display", value: "13.4-inch 4K OLED", include: true },
+      { id: 5, key: "Battery Life", value: "Up to 12 hours", include: true },
+      { id: 6, key: "Weight", value: "2.73 lbs (1.24 kg)", include: true }
     ]
   },
   {
@@ -63,20 +63,25 @@ const DEFAULT_TOP_PICKS: Product[] = [
     cons: ["Can get loud under load", "Limited webcam quality", "Premium price point"],
     affiliateLink: "https://amazon.com/asus-rog-zephyrus",
     specifications: [
-      { id: 1, key: "Processor", value: "AMD Ryzen 9 7940HS" },
-      { id: 2, key: "Graphics", value: "NVIDIA RTX 4060" },
-      { id: 3, key: "Memory", value: "16GB DDR5" },
-      { id: 4, key: "Storage", value: "1TB PCIe SSD" },
-      { id: 5, key: "Display", value: "14-inch 165Hz QHD" },
-      { id: 6, key: "Weight", value: "3.64 lbs (1.65 kg)" }
+      { id: 1, key: "Processor", value: "AMD Ryzen 9 7940HS", include: true },
+      { id: 2, key: "Graphics", value: "NVIDIA RTX 4060", include: true },
+      { id: 3, key: "Memory", value: "16GB DDR5", include: true },
+      { id: 4, key: "Storage", value: "1TB PCIe SSD", include: true },
+      { id: 5, key: "Display", value: "14-inch 165Hz QHD", include: true },
+      { id: 6, key: "Weight", value: "3.64 lbs (1.65 kg)", include: true }
     ]
   }
 ];
 
-// Helper function to ensure product has specifications array
+// Helper function to ensure product has specifications array with include property
 const ensureProductSpecifications = (product: any): Product => ({
   ...product,
-  specifications: Array.isArray(product.specifications) ? product.specifications : []
+  specifications: Array.isArray(product.specifications) 
+    ? product.specifications.map((spec: any) => ({
+        ...spec,
+        include: spec.include !== undefined ? spec.include : true
+      }))
+    : []
 });
 
 export default function SiteSparkApp() {
@@ -181,7 +186,7 @@ export default function SiteSparkApp() {
         const savedTopPicks = await storage.getItem(STORAGE_KEYS.TOP_PICKS);
         if (savedTopPicks) {
           const parsedTopPicks = JSON.parse(savedTopPicks);
-          // CRITICAL: Ensure specifications exist for all products
+          // CRITICAL: Ensure specifications exist for all products and have include property
           const updatedTopPicks = parsedTopPicks.map(ensureProductSpecifications);
           setTopPicks(updatedTopPicks);
         }
@@ -333,6 +338,51 @@ export default function SiteSparkApp() {
       console.error("Error saving new password:", error);
       throw error;
     }
+  };
+
+  // Function to add a new specification to a product
+  const addSpecification = (productId: number) => {
+    const newSpecification: Specification = {
+      id: Date.now(),
+      key: "",
+      value: "",
+      include: true,
+      onIncludeChange: (include: boolean) => {
+        updateSpecification(productId, newSpecification.id, { include });
+      }
+    };
+    
+    const updatedProducts = topPicks.map(product => {
+      if (product.id === productId) {
+        return {
+          ...product,
+          specifications: [...product.specifications, newSpecification]
+        };
+      }
+      return product;
+    });
+    
+    setTopPicks(updatedProducts);
+  };
+
+  // Function to update a specification
+  const updateSpecification = (productId: number, specId: number, updates: Partial<Specification>) => {
+    const updatedProducts = topPicks.map(product => {
+      if (product.id === productId) {
+        return {
+          ...product,
+          specifications: product.specifications.map(spec => {
+            if (spec.id === specId) {
+              return { ...spec, ...updates };
+            }
+            return spec;
+          })
+        };
+      }
+      return product;
+    });
+    
+    setTopPicks(updatedProducts);
   };
 
   // Generate HTML function (now async)
@@ -651,6 +701,8 @@ export default function SiteSparkApp() {
                   selectedTemplate={selectedTemplate}
                   setSelectedTemplate={setSelectedTemplate}
                   isGenerating={isGenerating}
+                  onAddSpecification={addSpecification}
+                  onUpdateSpecification={updateSpecification}
                 />
               </View>
               
@@ -693,6 +745,8 @@ export default function SiteSparkApp() {
                     selectedTemplate={selectedTemplate}
                     setSelectedTemplate={setSelectedTemplate}
                     isGenerating={isGenerating}
+                    onAddSpecification={addSpecification}
+                    onUpdateSpecification={updateSpecification}
                   />
                 </View>
               ) : (
