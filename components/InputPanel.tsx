@@ -241,7 +241,7 @@ export default function InputPanel({
 
       {/* Content based on active view */}
       {activeView === 'editor' ? (
-        <>
+        <View style={styles.editorContainer}>
           <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.contentContainer}>
             {/* App Header with Tagline */}
             <View style={styles.appHeader}>
@@ -540,7 +540,7 @@ export default function InputPanel({
             setSelectedTemplate={setSelectedTemplate}
             isGenerating={isGenerating}
           />
-        </>
+        </View>
       ) : (
         <SettingsPanel
           pexelsApiKey={pexelsApiKey}
@@ -593,6 +593,9 @@ const styles = StyleSheet.create({
   },
   tabButtonTextActive: {
     color: "#ffffff",
+  },
+  editorContainer: {
+    flex: 1,
   },
   scrollContainer: {
     flex: 1,
