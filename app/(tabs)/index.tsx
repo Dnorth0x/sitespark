@@ -1,133 +1,68 @@
 import React, { useState, useEffect } from "react";
 import { StyleSheet, View, Platform, useWindowDimensions, Alert, Text, TextInput, TouchableOpacity, ActivityIndicator, Modal } from "react-native";
 import { Stack } from "expo-router";
-import { Product, Specification } from "@/types";
-import InputPanel from "@/components/InputPanel";
-import PreviewPanel from "@/components/PreviewPanel";
 import { generateHtml } from "@/utils/htmlGenerator";
 import Colors from "@/constants/colors";
-import storage, { STORAGE_KEYS } from "@/utils/storage";
+import InputPanel from "@/components/InputPanel";
+import PreviewPanel from "@/components/PreviewPanel";
 import ImageSearchModal from "@/components/ImageSearchModal";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import ToastNotification from "@/components/ui/ToastNotification";
-
-// Default password for accessing the app
-const DEFAULT_PASSWORD = "Spark2025!";
-
-// Default data constants - extracted outside component for reset functionality
-const DEFAULT_NICHE_TITLE = "Best Laptops of 2025";
-const DEFAULT_PRIMARY_COLOR = "#4f46e5";
-const DEFAULT_SECONDARY_COLOR = "#10b981";
-const DEFAULT_INCLUDE_BRANDING = true;
-
-// Raw product data without functions
-const DEFAULT_TOP_PICKS_RAW = [
-  {
-    id: 1,
-    name: "MacBook Pro M3",
-    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1626&q=80",
-    tagline: "Ultimate performance for professionals with the revolutionary M3 chip",
-    pros: ["Exceptional battery life", "Powerful M3 processor", "Beautiful Retina display", "Premium build quality"],
-    cons: ["Expensive", "Limited ports", "Not easily upgradable"],
-    affiliateLink: "https://amazon.com/macbook-pro",
-    specifications: [
-      { id: 1, key: "Processor", value: "Apple M3 Pro 12-core CPU", include: true },
-      { id: 2, key: "Memory", value: "18GB Unified Memory", include: true },
-      { id: 3, key: "Storage", value: "512GB SSD", include: true },
-      { id: 4, key: "Display", value: "14.2-inch Liquid Retina XDR", include: true },
-      { id: 5, key: "Battery Life", value: "Up to 18 hours", include: true },
-      { id: 6, key: "Weight", value: "3.5 lbs (1.6 kg)", include: true }
-    ]
-  },
-  {
-    id: 2,
-    name: "Dell XPS 13 Plus",
-    imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1626&q=80",
-    tagline: "Sleek Windows ultrabook with cutting-edge design and performance",
-    pros: ["Stunning 4K display", "Premium build quality", "Fast Intel processor", "Compact and lightweight"],
-    cons: ["Limited port selection", "Average battery life", "Can get warm under load"],
-    affiliateLink: "https://amazon.com/dell-xps-13",
-    specifications: [
-      { id: 1, key: "Processor", value: "Intel Core i7-1360P", include: true },
-      { id: 2, key: "Memory", value: "16GB LPDDR5", include: true },
-      { id: 3, key: "Storage", value: "512GB PCIe SSD", include: true },
-      { id: 4, key: "Display", value: "13.4-inch 4K OLED", include: true },
-      { id: 5, key: "Battery Life", value: "Up to 12 hours", include: true },
-      { id: 6, key: "Weight", value: "2.73 lbs (1.24 kg)", include: true }
-    ]
-  },
-  {
-    id: 3,
-    name: "ASUS ROG Zephyrus G14",
-    imageUrl: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1626&q=80",
-    tagline: "Powerful gaming laptop that does not compromise on portability",
-    pros: ["Excellent gaming performance", "Great battery life for gaming laptop", "Compact 14-inch form factor", "High refresh rate display"],
-    cons: ["Can get loud under load", "Limited webcam quality", "Premium price point"],
-    affiliateLink: "https://amazon.com/asus-rog-zephyrus",
-    specifications: [
-      { id: 1, key: "Processor", value: "AMD Ryzen 9 7940HS", include: true },
-      { id: 2, key: "Graphics", value: "NVIDIA RTX 4060", include: true },
-      { id: 3, key: "Memory", value: "16GB DDR5", include: true },
-      { id: 4, key: "Storage", value: "1TB PCIe SSD", include: true },
-      { id: 5, key: "Display", value: "14-inch 165Hz QHD", include: true },
-      { id: 6, key: "Weight", value: "3.64 lbs (1.65 kg)", include: true }
-    ]
-  }
-];
-
-// Function to create products with proper specification functions
-const createProductsWithFunctions = (rawProducts: any[], updateSpecificationCallback: (productId: number, specId: number, updates: Partial<Specification>) => void): Product[] => {
-  return rawProducts.map(product => ({
-    ...product,
-    specifications: product.specifications.map((spec: any) => ({
-      ...spec,
-      onIncludeChange: (include: boolean) => {
-        updateSpecificationCallback(product.id, spec.id, { include });
-      }
-    }))
-  }));
-};
-
-// Helper function to ensure product has specifications array with include property
-const ensureProductSpecifications = (product: any): Product => ({
-  ...product,
-  specifications: Array.isArray(product.specifications) 
-    ? product.specifications.map((spec: any) => ({
-        ...spec,
-        include: spec.include !== undefined ? spec.include : true
-      }))
-    : []
-});
+import useAppStore from "@/store/useAppStore";
 
 export default function SiteSparkApp() {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
   const isWideScreen = width > 1024;
 
+  // Zustand store
+  const {
+    nicheTitle,
+    products: topPicks,
+    primaryColor,
+    secondaryColor,
+    includeBranding,
+    selectedTemplate,
+    generatedHtml,
+    pexelsApiKey,
+    currentPassword,
+    isResetModalOpen,
+    showResetSuccessToast,
+    saveStatus,
+    isGenerating,
+    setNicheTitle,
+    setProducts: setTopPicks,
+    setPrimaryColor,
+    setSecondaryColor,
+    setIncludeBranding,
+    setSelectedTemplate,
+    setGeneratedHtml,
+    setPexelsApiKey,
+    setCurrentPassword,
+    setSaveStatus,
+    setIsGenerating,
+    addProduct,
+    removeProduct,
+    updateProduct,
+    addSpecification,
+    removeSpecification,
+    updateSpecification,
+    openResetModal,
+    closeResetModal,
+    confirmReset,
+    hideSuccessToast,
+  } = useAppStore();
+
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [passwordInput, setPasswordInput] = useState<string>("");
   const [passwordError, setPasswordError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [currentPassword, setCurrentPassword] = useState<string>(DEFAULT_PASSWORD);
 
   // Mobile navigation state
   const [activeMobileView, setActiveMobileView] = useState<'form' | 'preview'>('form');
 
-  // App state - using default constants
-  const [nicheTitle, setNicheTitle] = useState<string>(DEFAULT_NICHE_TITLE);
-  const [topPicks, setTopPicks] = useState<Product[]>([]);
-  const [primaryColor, setPrimaryColor] = useState<string>(DEFAULT_PRIMARY_COLOR);
-  const [secondaryColor, setSecondaryColor] = useState<string>(DEFAULT_SECONDARY_COLOR);
-  const [includeBranding, setIncludeBranding] = useState<boolean>(DEFAULT_INCLUDE_BRANDING);
-  const [generatedHtml, setGeneratedHtml] = useState<string>("");
-  const [saveStatus, setSaveStatus] = useState<string>("idle");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("classic");
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
-
   // Pexels API state
-  const [pexelsApiKey, setPexelsApiKey] = useState<string>("");
   const [isImageSearchModalVisible, setIsImageSearchModalVisible] = useState<boolean>(false);
   const [currentEditingProductId, setCurrentEditingProductId] = useState<number | null>(null);
 
@@ -156,31 +91,6 @@ export default function SiteSparkApp() {
     type: "success"
   });
 
-  // Function to update a specification - this will be passed to the product creation function
-  const updateSpecification = (productId: number, specId: number, updates: Partial<Specification>) => {
-    const updatedProducts = topPicks.map(product => {
-      if (product.id === productId) {
-        return {
-          ...product,
-          specifications: product.specifications.map(spec => {
-            if (spec.id === specId) {
-              return { ...spec, ...updates };
-            }
-            return spec;
-          })
-        };
-      }
-      return product;
-    });
-    
-    setTopPicks(updatedProducts);
-  };
-
-  // Initialize default products with proper functions
-  const initializeDefaultProducts = () => {
-    return createProductsWithFunctions(DEFAULT_TOP_PICKS_RAW, updateSpecification);
-  };
-
   // Check authentication on app load
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -193,165 +103,10 @@ export default function SiteSparkApp() {
         // For mobile, we'll skip authentication for now
         setIsAuthenticated(true);
       }
-      
-      // Load saved password
-      try {
-        const savedPassword = await storage.getItem(STORAGE_KEYS.APP_PASSWORD);
-        if (savedPassword) {
-          setCurrentPassword(savedPassword);
-        }
-      } catch (error) {
-        console.error("Error loading saved password:", error);
-      }
     };
     
     checkAuthentication();
   }, []);
-
-  // Load data from storage on initial render (only after authentication)
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    
-    const loadSavedData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Load niche title
-        const savedNicheTitle = await storage.getItem(STORAGE_KEYS.NICHE_TITLE);
-        if (savedNicheTitle) {
-          setNicheTitle(savedNicheTitle);
-        }
-        
-        // Load top picks with defensive specifications handling
-        const savedTopPicks = await storage.getItem(STORAGE_KEYS.TOP_PICKS);
-        if (savedTopPicks) {
-          const parsedTopPicks = JSON.parse(savedTopPicks);
-          // CRITICAL: Ensure specifications exist for all products and have include property
-          const updatedTopPicks = parsedTopPicks.map(ensureProductSpecifications);
-          // Create products with proper functions
-          const productsWithFunctions = createProductsWithFunctions(updatedTopPicks, updateSpecification);
-          setTopPicks(productsWithFunctions);
-        } else {
-          // Initialize with default products if no saved data
-          setTopPicks(initializeDefaultProducts());
-        }
-        
-        // Load primary color
-        const savedPrimaryColor = await storage.getItem(STORAGE_KEYS.PRIMARY_COLOR);
-        if (savedPrimaryColor) {
-          setPrimaryColor(savedPrimaryColor);
-        }
-        
-        // Load secondary color
-        const savedSecondaryColor = await storage.getItem(STORAGE_KEYS.SECONDARY_COLOR);
-        if (savedSecondaryColor) {
-          setSecondaryColor(savedSecondaryColor);
-        }
-        
-        // Load branding preference
-        const savedIncludeBranding = await storage.getItem(STORAGE_KEYS.INCLUDE_BRANDING);
-        if (savedIncludeBranding !== null) {
-          setIncludeBranding(JSON.parse(savedIncludeBranding));
-        }
-        
-        // Load selected template
-        const savedTemplate = await storage.getItem(STORAGE_KEYS.SELECTED_TEMPLATE);
-        if (savedTemplate) {
-          setSelectedTemplate(savedTemplate);
-        }
-        
-        // Load Pexels API key
-        const savedPexelsApiKey = await storage.getItem(STORAGE_KEYS.PEXELS_API_KEY);
-        if (savedPexelsApiKey) {
-          setPexelsApiKey(savedPexelsApiKey);
-        }
-      } catch (error) {
-        console.error("Error loading saved data:", error);
-        // If loading fails, initialize with default products
-        setTopPicks(initializeDefaultProducts());
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadSavedData();
-  }, [isAuthenticated]);
-
-  // Save data to storage when it changes
-  useEffect(() => {
-    // Skip saving during initial load or if not authenticated
-    if (isLoading || !isAuthenticated) return;
-    
-    const saveData = async () => {
-      try {
-        setSaveStatus("Saving...");
-        
-        // Save niche title
-        await storage.setItem(STORAGE_KEYS.NICHE_TITLE, nicheTitle);
-        
-        // Save top picks (without functions for serialization)
-        const topPicksForStorage = topPicks.map(product => ({
-          ...product,
-          specifications: product.specifications.map(spec => ({
-            id: spec.id,
-            key: spec.key,
-            value: spec.value,
-            include: spec.include
-            // Don't save the onIncludeChange function
-          }))
-        }));
-        await storage.setItem(STORAGE_KEYS.TOP_PICKS, JSON.stringify(topPicksForStorage));
-        
-        // Save primary color
-        await storage.setItem(STORAGE_KEYS.PRIMARY_COLOR, primaryColor);
-        
-        // Save secondary color
-        await storage.setItem(STORAGE_KEYS.SECONDARY_COLOR, secondaryColor);
-        
-        // Save branding preference
-        await storage.setItem(STORAGE_KEYS.INCLUDE_BRANDING, JSON.stringify(includeBranding));
-        
-        // Save selected template
-        await storage.setItem(STORAGE_KEYS.SELECTED_TEMPLATE, selectedTemplate);
-        
-        // Update save status with a delay
-        setTimeout(() => {
-          setSaveStatus("Saved!");
-          
-          // Reset status after 2 seconds
-          setTimeout(() => {
-            setSaveStatus("idle");
-          }, 2000);
-        }, 200);
-      } catch (error) {
-        console.error("Error saving data:", error);
-        setSaveStatus("Save failed");
-        
-        // Reset status after 2 seconds
-        setTimeout(() => {
-          setSaveStatus("idle");
-        }, 2000);
-      }
-    };
-    
-    saveData();
-  }, [nicheTitle, topPicks, primaryColor, secondaryColor, includeBranding, selectedTemplate, isLoading, isAuthenticated]);
-
-  // Save Pexels API key when it changes
-  useEffect(() => {
-    // Skip saving during initial load or if not authenticated
-    if (isLoading || !isAuthenticated) return;
-    
-    const savePexelsApiKey = async () => {
-      try {
-        await storage.setItem(STORAGE_KEYS.PEXELS_API_KEY, pexelsApiKey);
-      } catch (error) {
-        console.error("Error saving Pexels API key:", error);
-      }
-    };
-    
-    savePexelsApiKey();
-  }, [pexelsApiKey, isLoading, isAuthenticated]);
 
   // Handle password submission
   const handlePasswordSubmit = async () => {
@@ -381,9 +136,6 @@ export default function SiteSparkApp() {
   // Handle password change
   const handleChangePassword = async (newPassword: string) => {
     try {
-      // Save new password to storage
-      await storage.setItem(STORAGE_KEYS.APP_PASSWORD, newPassword);
-      
       // Update current password state
       setCurrentPassword(newPassword);
       
@@ -395,31 +147,6 @@ export default function SiteSparkApp() {
       console.error("Error saving new password:", error);
       throw error;
     }
-  };
-
-  // Function to add a new specification to a product
-  const addSpecification = (productId: number) => {
-    const newSpecification: Specification = {
-      id: Date.now(),
-      key: "",
-      value: "",
-      include: true,
-      onIncludeChange: (include: boolean) => {
-        updateSpecification(productId, newSpecification.id, { include });
-      }
-    };
-    
-    const updatedProducts = topPicks.map(product => {
-      if (product.id === productId) {
-        return {
-          ...product,
-          specifications: [...product.specifications, newSpecification]
-        };
-      }
-      return product;
-    });
-    
-    setTopPicks(updatedProducts);
   };
 
   // Generate HTML function (now async)
@@ -481,22 +208,13 @@ export default function SiteSparkApp() {
     showConfirmationModal(
       "Reset Content",
       "Are you sure you want to reset all content to the default examples? This will replace your current niche title and products.",
-      confirmResetContent,
+      () => {
+        confirmReset();
+        hideConfirmationModal();
+        showToast("Content reset to default examples successfully!", "success");
+      },
       "warning"
     );
-  };
-
-  const confirmResetContent = () => {
-    setNicheTitle(DEFAULT_NICHE_TITLE);
-    setTopPicks(initializeDefaultProducts()); // Use the function to create products with proper functions
-    setPrimaryColor(DEFAULT_PRIMARY_COLOR);
-    setSecondaryColor(DEFAULT_SECONDARY_COLOR);
-    setIncludeBranding(DEFAULT_INCLUDE_BRANDING);
-    setSelectedTemplate("classic");
-    setGeneratedHtml("");
-    
-    hideConfirmationModal();
-    showToast("Content reset to default examples successfully!", "success");
   };
 
   // Clear all data function with confirmation
@@ -504,50 +222,31 @@ export default function SiteSparkApp() {
     showConfirmationModal(
       "Clear All Data",
       "Are you sure you want to clear all your data? This action cannot be undone and will remove all your content, settings, and API keys.",
-      confirmClearData,
+      async () => {
+        try {
+          // Reset state to defaults using store actions
+          confirmReset();
+          setPexelsApiKey("");
+          
+          hideConfirmationModal();
+          showToast("All data cleared successfully!", "success");
+        } catch (error) {
+          console.error("Error clearing data:", error);
+          hideConfirmationModal();
+          showToast("Failed to clear data. Please try again.", "error");
+        }
+      },
       "danger"
     );
   };
 
-  const confirmClearData = async () => {
-    try {
-      await storage.removeItem(STORAGE_KEYS.NICHE_TITLE);
-      await storage.removeItem(STORAGE_KEYS.TOP_PICKS);
-      await storage.removeItem(STORAGE_KEYS.PRIMARY_COLOR);
-      await storage.removeItem(STORAGE_KEYS.SECONDARY_COLOR);
-      await storage.removeItem(STORAGE_KEYS.INCLUDE_BRANDING);
-      await storage.removeItem(STORAGE_KEYS.SELECTED_TEMPLATE);
-      await storage.removeItem(STORAGE_KEYS.PEXELS_API_KEY);
-      // Note: We don't clear the password as that would lock the user out
-      
-      // Reset state to defaults
-      setNicheTitle(DEFAULT_NICHE_TITLE);
-      setTopPicks(initializeDefaultProducts()); // Use the function to create products with proper functions
-      setPrimaryColor(DEFAULT_PRIMARY_COLOR);
-      setSecondaryColor(DEFAULT_SECONDARY_COLOR);
-      setIncludeBranding(DEFAULT_INCLUDE_BRANDING);
-      setSelectedTemplate("classic");
-      setGeneratedHtml("");
-      setPexelsApiKey("");
-      
-      hideConfirmationModal();
-      showToast("All data cleared successfully!", "success");
-    } catch (error) {
-      console.error("Error clearing data:", error);
-      hideConfirmationModal();
-      showToast("Failed to clear data. Please try again.", "error");
-    }
-  };
-
   // Check if current content matches defaults
   const isContentDefault = () => {
-    const defaultProducts = initializeDefaultProducts();
-    return nicheTitle === DEFAULT_NICHE_TITLE && 
-           JSON.stringify(topPicks.map(p => ({ ...p, specifications: p.specifications.map(s => ({ id: s.id, key: s.key, value: s.value, include: s.include })) }))) === 
-           JSON.stringify(defaultProducts.map(p => ({ ...p, specifications: p.specifications.map(s => ({ id: s.id, key: s.key, value: s.value, include: s.include })) }))) &&
-           primaryColor === DEFAULT_PRIMARY_COLOR &&
-           secondaryColor === DEFAULT_SECONDARY_COLOR &&
-           includeBranding === DEFAULT_INCLUDE_BRANDING;
+    return nicheTitle === "Best Laptops of 2025" && 
+           topPicks.length === 3 &&
+           primaryColor === "#4f46e5" &&
+           secondaryColor === "#10b981" &&
+           includeBranding === true;
   };
 
   // Handle opening image search modal
@@ -565,14 +264,11 @@ export default function SiteSparkApp() {
   const handleSelectImage = (imageUrl: string) => {
     if (currentEditingProductId === null) return;
     
-    const updatedProducts = topPicks.map(product => {
-      if (product.id === currentEditingProductId) {
-        return { ...product, imageUrl };
-      }
-      return product;
-    });
+    const productIndex = topPicks.findIndex(p => p.id === currentEditingProductId);
+    if (productIndex !== -1) {
+      updateProduct(productIndex, 'imageUrl', imageUrl);
+    }
     
-    setTopPicks(updatedProducts);
     setIsImageSearchModalVisible(false);
     setCurrentEditingProductId(null);
     showToast("Product image updated successfully!", "success");
@@ -726,7 +422,7 @@ export default function SiteSparkApp() {
                   setSecondaryColor={setSecondaryColor}
                   includeBranding={includeBranding}
                   setIncludeBranding={setIncludeBranding}
-                  isLoading={isLoading}
+                  isLoading={false}
                   onOpenImageSearch={handleOpenImageSearch}
                   pexelsApiKey={pexelsApiKey}
                   setPexelsApiKey={setPexelsApiKey}
@@ -742,6 +438,10 @@ export default function SiteSparkApp() {
                   isGenerating={isGenerating}
                   onAddSpecification={addSpecification}
                   onUpdateSpecification={updateSpecification}
+                  onAddProduct={addProduct}
+                  onRemoveProduct={removeProduct}
+                  onUpdateProduct={updateProduct}
+                  onRemoveSpecification={removeSpecification}
                 />
               </View>
               
@@ -770,7 +470,7 @@ export default function SiteSparkApp() {
                     setSecondaryColor={setSecondaryColor}
                     includeBranding={includeBranding}
                     setIncludeBranding={setIncludeBranding}
-                    isLoading={isLoading}
+                    isLoading={false}
                     onOpenImageSearch={handleOpenImageSearch}
                     pexelsApiKey={pexelsApiKey}
                     setPexelsApiKey={setPexelsApiKey}
@@ -786,6 +486,10 @@ export default function SiteSparkApp() {
                     isGenerating={isGenerating}
                     onAddSpecification={addSpecification}
                     onUpdateSpecification={updateSpecification}
+                    onAddProduct={addProduct}
+                    onRemoveProduct={removeProduct}
+                    onUpdateProduct={updateProduct}
+                    onRemoveSpecification={removeSpecification}
                   />
                 </View>
               ) : (
@@ -822,6 +526,14 @@ export default function SiteSparkApp() {
           message={toast.message}
           type={toast.type}
           onHide={hideToast}
+        />
+
+        {/* Reset Success Toast from Store */}
+        <ToastNotification
+          visible={showResetSuccessToast}
+          message="Content reset successfully!"
+          type="success"
+          onHide={hideSuccessToast}
         />
       </View>
     </>

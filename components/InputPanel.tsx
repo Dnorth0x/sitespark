@@ -34,6 +34,10 @@ interface InputPanelProps {
   isGenerating?: boolean;
   onAddSpecification: (productId: number) => void;
   onUpdateSpecification: (productId: number, specId: number, updates: Partial<Specification>) => void;
+  onAddProduct: () => void;
+  onRemoveProduct: (index: number) => void;
+  onUpdateProduct: (index: number, field: keyof Product, value: any) => void;
+  onRemoveSpecification: (productIndex: number, specIndex: number) => void;
 }
 
 // Helper function to ensure specifications array exists with include property
@@ -101,74 +105,40 @@ export default function InputPanel({
   setSelectedTemplate,
   isGenerating = false,
   onAddSpecification,
-  onUpdateSpecification
+  onUpdateSpecification,
+  onAddProduct,
+  onRemoveProduct,
+  onUpdateProduct,
+  onRemoveSpecification
 }: InputPanelProps) {
   
   const [activeView, setActiveView] = useState<'editor' | 'settings'>('editor');
   const [magicWandLoading, setMagicWandLoading] = useState<{ [key: number]: boolean }>({});
   
   const handleProductChange = (index: number, field: keyof Product, value: string | string[] | Specification[]) => {
-    const updatedProducts = [...topPicks];
-    
-    // Ensure the product has specifications before any operation
-    updatedProducts[index] = ensureSpecifications(updatedProducts[index]);
-    
-    // Handle pros and cons arrays (comma-separated strings)
-    if (field === 'pros' || field === 'cons') {
-      if (typeof value === 'string') {
-        // Split by comma and trim each item, filter out empty strings
-        updatedProducts[index][field] = value.split(',').map(item => item.trim()).filter(item => item !== '');
-      } else {
-        updatedProducts[index][field] = value as string[];
-      }
-    } else if (field === 'specifications') {
-      updatedProducts[index][field] = value as Specification[];
-    } else {
-      // @ts-ignore - TypeScript doesn't know that value can be assigned to the field
-      updatedProducts[index][field] = value;
-    }
-    
-    setTopPicks(updatedProducts);
+    onUpdateProduct(index, field, value);
   };
 
   const addProduct = () => {
-    const newProduct: Product = {
-      id: Date.now(), // Simple unique ID
-      name: "",
-      imageUrl: "",
-      tagline: "",
-      pros: [],
-      cons: [],
-      affiliateLink: "",
-      specifications: [], // CRITICAL: Always initialize specifications as empty array
-    };
-    
-    setTopPicks([...topPicks, newProduct]);
+    onAddProduct();
   };
 
   const removeProduct = (index: number) => {
     if (topPicks.length > 1) {
-      const updatedProducts = topPicks.filter((_, i) => i !== index);
-      setTopPicks(updatedProducts);
+      onRemoveProduct(index);
     }
   };
 
   const removeSpecification = (productIndex: number, specIndex: number) => {
-    const updatedProducts = [...topPicks];
-    // CRITICAL: Ensure specifications array exists before filtering
-    updatedProducts[productIndex] = ensureSpecifications(updatedProducts[productIndex]);
-    updatedProducts[productIndex].specifications = updatedProducts[productIndex].specifications.filter((_, i) => i !== specIndex);
-    setTopPicks(updatedProducts);
+    onRemoveSpecification(productIndex, specIndex);
   };
 
   const handleSpecificationChange = (productIndex: number, specIndex: number, field: 'key' | 'value', value: string) => {
-    const updatedProducts = [...topPicks];
-    // CRITICAL: Ensure specifications array exists before updating
-    updatedProducts[productIndex] = ensureSpecifications(updatedProducts[productIndex]);
+    const product = topPicks[productIndex];
+    const spec = product.specifications[specIndex];
     
-    if (updatedProducts[productIndex].specifications[specIndex]) {
-      updatedProducts[productIndex].specifications[specIndex][field] = value;
-      setTopPicks(updatedProducts);
+    if (spec && onUpdateSpecification) {
+      onUpdateSpecification(product.id, spec.id, { [field]: value });
     }
   };
 
